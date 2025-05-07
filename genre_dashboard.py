@@ -5,9 +5,9 @@ import time
 
 @st.cache_data
 def charger_donnees_genre():
-    df_genre_trimestre = pd.read_excel("data/Genre par trimestre.xlsx", engine="openpyxl")
-    df_repartition_genre = pd.read_excel("data/Repartition genre.xlsx", engine="openpyxl")
-    df_genre_commune = pd.read_excel("data/Genre par Commune.xlsx", engine="openpyxl")
+    df_genre_trimestre = pd.read_excel("genre/Genre par trimestre.xlsx", engine="openpyxl")
+    df_repartition_genre = pd.read_excel("genre/Repartition genre.xlsx", engine="openpyxl")
+    df_genre_commune = pd.read_excel("genre/Genre par Commune.xlsx", engine="openpyxl")
     return df_genre_trimestre, df_repartition_genre, df_genre_commune
 
 def personnaliser_graphique(fig, titre=None):
