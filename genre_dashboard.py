@@ -29,7 +29,7 @@ def afficher_jauge_objectif(pourcentage, seuil=30):
     for i in range(0, int(pourcentage) + 1):
         barres = int(i / 5) * "█" + int((100 - i) / 5) * "░"
         jauge.markdown(f"**🟡 Femmes : {i} %**\n\n`{barres}`")
-        time.sleep(0.05)
+        time.sleep(0.2)
     if pourcentage >= seuil:
         statut.success("✅ Objectif atteint !")
     else:
