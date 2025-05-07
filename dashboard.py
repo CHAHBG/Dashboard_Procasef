@@ -17,7 +17,7 @@ import genre_dashboard  # Ajout de l'import du nouveau module
 # Chargement des données des parcelles
 @st.cache_data
 def charger_parcelles():
-    df = pd.read_excel("parcelles.xlsx", engine="openpyxl")
+    df = pd.read_excel("data/parcelles.xlsx", engine="openpyxl")
     df.columns = df.columns.str.lower()
 
     # Traitement du statut NICAD
