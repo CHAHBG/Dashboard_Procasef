@@ -58,7 +58,7 @@ def afficher_projections_2025():
 
     # Jauge animée de progression
     progress_bar = col2.empty()
-    for percent in range(0, int(progression_pct) + 1, 2):
+    for percent in range(0, round(progression_pct) + 1, 2):
         progress_bar.progress(min(percent / 100, 1.0), text=f"{percent}% de l'objectif atteint")
         time.sleep(0.2)
 
