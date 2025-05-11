@@ -50,7 +50,7 @@ def afficher_projections_2025():
 
     dernier_mois = df["mois"].iloc[-1]
     objectif_total = df["objectif_total"].iloc[-1]
-    realises_total = 19360
+    realises_total = 26708
     progression_pct = (realises_total / objectif_total) * 100 if objectif_total else 0
 
     col1, col2 = st.columns(2)
