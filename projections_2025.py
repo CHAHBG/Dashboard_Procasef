@@ -60,7 +60,7 @@ def afficher_projections_2025():
     progress_bar = col2.empty()
     for percent in range(0, int(progression_pct) + 1, 2):
         progress_bar.progress(min(percent / 100, 1.0), text=f"{percent}% de l'objectif atteint")
-        time.sleep(0.02)
+        time.sleep(0.2)
 
     st.markdown("---")
 
