@@ -169,7 +169,7 @@ def afficher_avancement_regions(df_etapes):
         yaxis=dict(range=[0, 100])
     )
 
-    st.plotly_chart(fig_regions_bar, use_container_width=True)
+    st.plotly_chart(fig_regions_bar, use_container_width=True, key="regions_bar_chart")
 
 
 def afficher_resume_etat_avancement(df_etapes):
@@ -204,7 +204,7 @@ def afficher_resume_etat_avancement(df_etapes):
         }
     )
 
-    st.plotly_chart(fig_resume, use_container_width=True)
+    st.plotly_chart(fig_resume, use_container_width=True, key="resume_pie_chart")
 
 
 def afficher_vue_region(df_etapes_filtre, region_sel):
@@ -264,7 +264,7 @@ def afficher_tableau_communes_region(df_etapes_filtre, region_sel):
         xaxis=dict(range=[0, 100])
     )
 
-    st.plotly_chart(fig_communes, use_container_width=True)
+    st.plotly_chart(fig_communes, use_container_width=True, key=f"communes_bar_{region_sel}")
 
 
 def get_progress_indicator(progress):
@@ -305,7 +305,8 @@ def afficher_details_communes(df_etapes_filtre):
         col1, col2 = st.columns([1, 2])
 
         with col1:
-            afficher_jauge_progres(progress, color, steps)
+            # Utiliser l'indice de la ligne comme partie de la clé unique
+            afficher_jauge_progres(progress, color, steps, f"gauge_{row['Commune']}_{idx}")
 
         with col2:
             afficher_infos_commune(row)
@@ -340,9 +341,15 @@ def determiner_parametres_jauge(progress):
     return color, steps, threshold_color
 
 
-def afficher_jauge_progres(progress, color, steps):
+def afficher_jauge_progres(progress, color, steps, key_suffix):
     """
     Affiche une jauge de progrès pour une commune
+    
+    Args:
+        progress: Valeur du progrès (pourcentage)
+        color: Couleur de la jauge basée sur le niveau d'avancement
+        steps: Étapes de couleur pour la jauge
+        key_suffix: Suffixe unique pour la clé du graphique
     """
     # Création d'une jauge (gauge) stylisée
     fig = go.Figure(go.Indicator(
@@ -373,7 +380,8 @@ def afficher_jauge_progres(progress, color, steps):
         font={"color": "darkblue", "family": "Arial"}
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    # Utiliser une clé unique pour chaque graphique
+    st.plotly_chart(fig, use_container_width=True, key=key_suffix)
 
 
 def afficher_infos_commune(row):
