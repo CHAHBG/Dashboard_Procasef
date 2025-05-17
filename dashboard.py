@@ -16,7 +16,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Chargement des données avec cache
+# Cache des données
 @st.cache_data
 def charger_parcelles():
     df = pd.read_excel("data/parcelles.xlsx", engine="openpyxl")
@@ -47,30 +47,39 @@ def charger_post_traitement():
         df.columns = df.columns.str.lower()
         return df
     except Exception:
-        return pd.DataFrame()
+        return pd.DataFrame()  # fichier manquant ou non prêt
 
-# Application principale
 def main():
-    # Barre latérale personnalisée
+    # --- SIDEBAR STYLÉE ---
     with st.sidebar:
-        st.markdown("""
+        # Appliquer style fond bleu nuit
+        st.markdown(
+            """
             <style>
-                .sidebar .sidebar-content {
-                    background-color: #001f3f;
-                }
-                .css-1aumxhk {
-                    background-color: #001f3f;
-                }
+            .sidebar .sidebar-content {
+                background-color: #001f3f;
+            }
             </style>
-            <div style="text-align:center; margin-bottom:1rem;">
-                <img src="logo/BETPLUSAUDETAG.png" width="120" style="border-radius:12px;">
-                <h2 style="color:#f39c12; margin-top:0.5rem;">PROCASEF Boundou</h2>
-                <p style="color:#ffffff; font-size:14px;">Tableau de bord interactif</p>
-                <hr style="border:1px solid #f39c12;">
-            </div>
-        """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True
+        )
 
-        # Menu avec style personnalisé
+        # Afficher logo centré
+        st.image("logo/BETPLUSAUDETAG.jpg", width=120)
+
+        # Titre et description
+        st.markdown(
+            """
+            <div style='text-align:center;'>
+                <h2 style='color:#f39c12;'>PROCASEF Boundou</h2>
+                <p style='color:#ffffff; font-size:14px;'>Tableau de bord interactif</p>
+                <hr style='border:1px solid #f39c12;'>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # Menu de navigation
         selected = option_menu(
             menu_title=None,
             options=[
@@ -99,20 +108,23 @@ def main():
             }
         )
 
-    # Titre principal
+    # --- CONTENU PRINCIPAL ---
     st.title("📊 Tableau de Bord PROCASEF - Boundou")
 
-    # Logique des vues
     if selected == "Répartition des parcelles":
         df_parcelles = charger_parcelles()
         repartParcelles.afficher_repartition(df_parcelles)
+
     elif selected == "État d'avancement":
         df_etapes = charger_etapes()
         progression.afficher_etat_avancement(df_etapes)
+
     elif selected == "Projections 2025":
         afficher_projections_2025()
+
     elif selected == "Répartition du genre":
         genre_dashboard.afficher_repartition_genre()
+
     elif selected == "Post-traitement":
         df_post = charger_post_traitement()
         post_traitement.afficher_post_traitement(df_post)
