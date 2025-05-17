@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
+import os
 
 # Imports modules internes
 import repartParcelles
@@ -51,13 +52,12 @@ def charger_post_traitement():
 
 def main():
     with st.sidebar:
+        logo_path = os.path.join("logo", "BETPLUSAUDETAG.jpg")
+        st.image(logo_path, width=120)
         st.markdown("""
-        <div style="text-align:center; margin-bottom:1rem;">
-            <img src="/logo/BETPLUSAUDETAG.jpg" alt="Logo" style="width:120px; border-radius:12px;"/>
-            <h2 style="color:#f39c12; margin-top:0.5rem;">PROCASEF Boundou</h2>
-            <p style="color:#888; font-size:14px;">Tableau de bord interactif</p>
+            <h2 style="color:#f39c12; margin-top:0.5rem; text-align:center;">PROCASEF Boundou</h2>
+            <p style="color:#888; font-size:14px; text-align:center;">Tableau de bord interactif</p>
             <hr style="border:1px solid #f39c12;">
-        </div>
         """, unsafe_allow_html=True)
 
         selected = option_menu(
@@ -73,22 +73,21 @@ def main():
             menu_icon="cast",
             default_index=0,
             styles={
-                "container": {"padding": "5px", "background-color": "#0b1120"},  # bleu nuit
-                "icon": {"color": "#f39c12", "font-size": "20px"},              # jaune/orangé
+                "container": {"padding": "5px", "background-color": "#0a1e3f"},
+                "icon": {"color": "#f39c12", "font-size": "20px"},
                 "nav-link": {
                     "font-size": "16px",
                     "text-align": "left",
                     "margin": "0px",
                     "--hover-color": "#f39c12",
-                    "color": "#ffffff",                                           # blanc texte
+                    "color": "white",
                 },
-                "nav-link-selected": {"background-color": "#f39c12", "color": "#0b1120"},  # fond jaune, texte bleu nuit
+                "nav-link-selected": {"background-color": "#f39c12", "color": "black"},
             }
         )
 
     st.title("📊 Tableau de Bord PROCASEF - Boundou")
 
-    # Affichage selon onglet sélectionné
     if selected == "Répartition des parcelles":
         df_parcelles = charger_parcelles()
         repartParcelles.afficher_repartition(df_parcelles)
@@ -102,7 +101,6 @@ def main():
     elif selected == "Post-traitement":
         df_post = charger_post_traitement()
         post_traitement.afficher_post_traitement(df_post)
-
 
 if __name__ == "__main__":
     main()
