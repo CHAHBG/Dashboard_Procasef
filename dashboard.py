@@ -50,46 +50,42 @@ def charger_post_traitement():
         return pd.DataFrame()  # fichier manquant ou non prêt
 
 def main():
-    # Header dans sidebar
     with st.sidebar:
         st.markdown("""
         <div style="text-align:center; margin-bottom:1rem;">
-            <img src="logo/BETPLUSAUDETAG.jpg" alt="Logo" style="width:120px; border-radius:12px;"/>
-            <h2 style="color:#f5b841; margin-top:0.5rem;">PROCASEF Boundou</h2>
-            <p style="color:#ddd; font-size:14px;">Tableau de bord interactif</p>
-            <hr style="border:1px solid #f5b841;">
+            <img src="/logo/BETPLUSAUDETAG.jpg" alt="Logo" style="width:120px; border-radius:12px;"/>
+            <h2 style="color:#f39c12; margin-top:0.5rem;">PROCASEF Boundou</h2>
+            <p style="color:#888; font-size:14px;">Tableau de bord interactif</p>
+            <hr style="border:1px solid #f39c12;">
         </div>
         """, unsafe_allow_html=True)
 
-    selected = option_menu(
-        menu_title=None,
-        options=[
-            "Répartition des parcelles",
-            "État d'avancement",
-            "Projections 2025",
-            "Répartition du genre",
-            "Post-traitement"
-        ],
-        icons=["map", "bar-chart-line", "calendar", "gender-female", "gear"],
-        menu_icon="cast",
-        default_index=0,
-        styles={
-            "container": {"padding": "5px", "background-color": "#0b2545"},
-            "icon": {"color": "#f5b841", "font-size": "20px"},
-            "nav-link": {
-                "font-size": "16px",
-                "text-align": "left",
-                "margin": "0px",
-                "color": "white",
-                "--hover-color": "#f5b841",
-            },
-            "nav-link-selected": {
-                "background-color": "#f5b841",
-                "color": "#0b2545",
-                "font-weight": "bold",
-            },
-        }
-    )
+        selected = option_menu(
+            menu_title=None,
+            options=[
+                "Répartition des parcelles",
+                "État d'avancement",
+                "Projections 2025",
+                "Répartition du genre",
+                "Post-traitement"
+            ],
+            icons=["map", "bar-chart-line", "calendar", "gender-female", "gear"],
+            menu_icon="cast",
+            default_index=0,
+            styles={
+                "container": {"padding": "5px", "background-color": "#0b1120"},  # bleu nuit
+                "icon": {"color": "#f39c12", "font-size": "20px"},              # jaune/orangé
+                "nav-link": {
+                    "font-size": "16px",
+                    "text-align": "left",
+                    "margin": "0px",
+                    "--hover-color": "#f39c12",
+                    "color": "#ffffff",                                           # blanc texte
+                },
+                "nav-link-selected": {"background-color": "#f39c12", "color": "#0b1120"},  # fond jaune, texte bleu nuit
+            }
+        )
+
     st.title("📊 Tableau de Bord PROCASEF - Boundou")
 
     # Affichage selon onglet sélectionné
@@ -106,6 +102,7 @@ def main():
     elif selected == "Post-traitement":
         df_post = charger_post_traitement()
         post_traitement.afficher_post_traitement(df_post)
+
 
 if __name__ == "__main__":
     main()
