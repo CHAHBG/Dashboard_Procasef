@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
-import os
 
 # Imports modules internes
 import repartParcelles
@@ -10,7 +9,7 @@ from projections_2025 import afficher_projections_2025
 import genre_dashboard
 import post_traitement
 
-# Config page
+# Configuration de la page
 st.set_page_config(
     page_title="PROCASEF - Boundou",
     page_icon="logo/BETPLUSAUDETAG.jpg",
@@ -48,18 +47,30 @@ def charger_post_traitement():
         df.columns = df.columns.str.lower()
         return df
     except Exception:
-        return pd.DataFrame()  # fichier manquant ou non prêt
+        return pd.DataFrame()
 
+# Application principale
 def main():
+    # Barre latérale personnalisée
     with st.sidebar:
-        logo_path = os.path.join("logo", "BETPLUSAUDETAG.jpg")
-        st.image(logo_path, width=120)
         st.markdown("""
-            <h2 style="color:#f39c12; margin-top:0.5rem; text-align:center;">PROCASEF Boundou</h2>
-            <p style="color:#888; font-size:14px; text-align:center;">Tableau de bord interactif</p>
-            <hr style="border:1px solid #f39c12;">
+            <style>
+                .sidebar .sidebar-content {
+                    background-color: #001f3f;
+                }
+                .css-1aumxhk {
+                    background-color: #001f3f;
+                }
+            </style>
+            <div style="text-align:center; margin-bottom:1rem;">
+                <img src="logo/BETPLUSAUDETAG.png" width="120" style="border-radius:12px;">
+                <h2 style="color:#f39c12; margin-top:0.5rem;">PROCASEF Boundou</h2>
+                <p style="color:#ffffff; font-size:14px;">Tableau de bord interactif</p>
+                <hr style="border:1px solid #f39c12;">
+            </div>
         """, unsafe_allow_html=True)
 
+        # Menu avec style personnalisé
         selected = option_menu(
             menu_title=None,
             options=[
@@ -73,21 +84,25 @@ def main():
             menu_icon="cast",
             default_index=0,
             styles={
-                "container": {"padding": "5px", "background-color": "#0a1e3f"},
+                "container": {"padding": "5px", "background-color": "#001f3f"},
                 "icon": {"color": "#f39c12", "font-size": "20px"},
                 "nav-link": {
                     "font-size": "16px",
                     "text-align": "left",
-                    "margin": "0px",
+                    "color": "#ffffff",
                     "--hover-color": "#f39c12",
-                    "color": "white",
                 },
-                "nav-link-selected": {"background-color": "#f39c12", "color": "black"},
+                "nav-link-selected": {
+                    "background-color": "#f39c12",
+                    "color": "white"
+                },
             }
         )
 
+    # Titre principal
     st.title("📊 Tableau de Bord PROCASEF - Boundou")
 
+    # Logique des vues
     if selected == "Répartition des parcelles":
         df_parcelles = charger_parcelles()
         repartParcelles.afficher_repartition(df_parcelles)
