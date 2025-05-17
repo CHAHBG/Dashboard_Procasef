@@ -1,36 +1,35 @@
-# post_traitement.py
-
+import json
 import streamlit as st
 from streamlit_lottie import st_lottie
-import requests
 
-def load_lottie_url(url):
-    r = requests.get(url)
-    if r.status_code != 200:
-        return None
-    return r.json()
+def load_lottie_file(filepath):
+    with open(filepath, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 def afficher_post_traitement(df=None):
-    lottie_construction = load_lottie_url("https://lottie.host/34c3adf6-1799-486f-aec5-70ce5393fe8c/b2XRRd3cfh.json")
+    try:
+        lottie_construction = load_lottie_file("lottie/Animation - 1747510433900.json")
+    except Exception as e:
+        st.error(f"Erreur chargement animation : {e}")
+        lottie_construction = None
 
     col1, col2, col3 = st.columns([1, 2, 1])
-
     with col2:
-        st_lottie(
-            lottie_construction,
-            speed=1,
-            reverse=False,
-            loop=True,
-            quality="high",
-            height=300
-        )
+        if lottie_construction:
+            st_lottie(
+                lottie_construction,
+                speed=1,
+                loop=True,
+                quality="high",
+                height=300,
+            )
+        else:
+            st.warning("⚠️ Animation indisponible")
 
         st.markdown("""
-            <div style='text-align: center; padding: 1rem;'>
-                <h1 style='font-size: 2.5em; color: #f39c12;'>🚧 Page en construction</h1>
-                <p style='font-size: 1.3em; color: #444;'>
-                    Cette section dédiée au post-traitement des parcelles sera bientôt disponible.
-                </p>
-                <p style='font-size: 1.1em; color: #777;'>Merci de votre patience 🙏</p>
+            <div style="text-align: center; padding: 1rem;">
+                <h1 style="color: #f39c12;">🚧 Page en construction</h1>
+                <p style="color: #444; font-size: 1.3em;">Cette section sera bientôt disponible.</p>
+                <p style="color: #777;">Merci de votre patience 🙏</p>
             </div>
         """, unsafe_allow_html=True)
