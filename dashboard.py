@@ -54,17 +54,32 @@ def charger_post_traitement():
 def main():
     st.title("📊 Tableau de Bord PROCASEF - Boundou")
 
-    onglet = st.sidebar.radio(
-        "Choisissez une vue :",
-        [
-            "Répartition des parcelles",
-            "État d'avancement",
-            "Projections 2025",
-            "Répartition du genre",
-            "Post-traitement"
-        ]
-    )
+    st.sidebar.markdown("""
+    <div style="text-align: center; margin-bottom: 1rem;">
+        <img src="https://raw.githubusercontent.com/tonlogo/BETPLUSAUDETAG.jpg" alt="Logo" style="width: 100px; border-radius: 10px;"/>
+        <h2 style="margin-top: 0.5rem; color: #f39c12;">PROCASEF Boundou</h2>
+        <p style="font-size: 0.9rem; color: #888;">Tableau de bord interactif</p>
+        <hr style="border: 1px solid #f39c12;">
+    </div>
+    """, unsafe_allow_html=True)
 
+    options = {
+        "📍 Répartition des parcelles": "Répartition des parcelles",
+        "📈 État d'avancement": "État d'avancement",
+        "📅 Projections 2025": "Projections 2025",
+        "⚧ Répartition du genre": "Répartition du genre",
+        "⚙️ Post-traitement": "Post-traitement"
+    }
+
+    choix = st.sidebar.radio(
+        "Navigation",
+        options.keys(),
+        index=0,
+        label_visibility="visible"
+    )
+    onglet = options[choix]
+
+    # Chargement et affichage selon onglet
     if onglet == "Répartition des parcelles":
         df_parcelles = charger_parcelles()
         repartParcelles.afficher_repartition(df_parcelles)
@@ -78,6 +93,7 @@ def main():
     elif onglet == "Post-traitement":
         df_post = charger_post_traitement()
         post_traitement.afficher_post_traitement(df_post)
+
 
 if __name__ == "__main__":
     main()
