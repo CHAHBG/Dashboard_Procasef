@@ -52,41 +52,44 @@ def charger_post_traitement():
 def main():
     # Header dans sidebar
     with st.sidebar:
-        st.markdown("""
-        <div style="text-align:center; margin-bottom:1rem;">
-            <img src="logo/BETPLUSAUDETAG.jpg" alt="Logo" style="width:120px; border-radius:12px;"/>
-            <h2 style="color:#f39c12; margin-top:0.5rem;">PROCASEF Boundou</h2>
-            <p style="color:#888; font-size:14px;">Tableau de bord interactif</p>
-            <hr style="border:1px solid #f39c12;">
-        </div>
-        """, unsafe_allow_html=True)
+    st.markdown("""
+    <div style="text-align:center; margin-bottom:1rem;">
+        <img src="logo/BETPLUSAUDETAG.jpg" alt="Logo" style="width:120px; border-radius:12px;"/>
+        <h2 style="color:#f5b841; margin-top:0.5rem;">PROCASEF Boundou</h2>
+        <p style="color:#ddd; font-size:14px;">Tableau de bord interactif</p>
+        <hr style="border:1px solid #f5b841;">
+    </div>
+    """, unsafe_allow_html=True)
 
-        # Menu option_menu stylé
-        selected = option_menu(
-            menu_title=None,
-            options=[
-                "Répartition des parcelles",
-                "État d'avancement",
-                "Projections 2025",
-                "Répartition du genre",
-                "Post-traitement"
-            ],
-            icons=["map", "bar-chart-line", "calendar", "gender-female", "gear"],
-            menu_icon="cast",
-            default_index=0,
-            styles={
-                "container": {"padding": "5px", "background-color": "#fafafa"},
-                "icon": {"color": "orange", "font-size": "20px"},
-                "nav-link": {
-                    "font-size": "16px",
-                    "text-align": "left",
-                    "margin": "0px",
-                    "--hover-color": "#f39c12",
-                },
-                "nav-link-selected": {"background-color": "#f39c12"},
-            }
-        )
-
+    selected = option_menu(
+        menu_title=None,
+        options=[
+            "Répartition des parcelles",
+            "État d'avancement",
+            "Projections 2025",
+            "Répartition du genre",
+            "Post-traitement"
+        ],
+        icons=["map", "bar-chart-line", "calendar", "gender-female", "gear"],
+        menu_icon="cast",
+        default_index=0,
+        styles={
+            "container": {"padding": "5px", "background-color": "#0b2545"},
+            "icon": {"color": "#f5b841", "font-size": "20px"},
+            "nav-link": {
+                "font-size": "16px",
+                "text-align": "left",
+                "margin": "0px",
+                "color": "white",
+                "--hover-color": "#f5b841",
+            },
+            "nav-link-selected": {
+                "background-color": "#f5b841",
+                "color": "#0b2545",
+                "font-weight": "bold",
+            },
+        }
+    )
     st.title("📊 Tableau de Bord PROCASEF - Boundou")
 
     # Affichage selon onglet sélectionné
