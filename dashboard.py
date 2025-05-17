@@ -18,7 +18,7 @@ import post_traitement
 # Chargement des données
 @st.cache_data
 def charger_parcelles():
-    df = pd.read_excel("parcelles.xlsx", engine="openpyxl")
+    df = pd.read_excel("data/parcelles.xlsx", engine="openpyxl")
     df.columns = df.columns.str.lower()
     df["nicad"] = df["nicad"].astype(str).str.strip().str.lower() == "oui"
     df["nicad"] = df["nicad"].map({True: "Avec NICAD", False: "Sans NICAD"})
