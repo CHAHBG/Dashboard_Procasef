@@ -52,14 +52,14 @@ def charger_post_traitement():
 def main():
     # Header dans sidebar
     with st.sidebar:
-    st.markdown("""
-    <div style="text-align:center; margin-bottom:1rem;">
-        <img src="logo/BETPLUSAUDETAG.jpg" alt="Logo" style="width:120px; border-radius:12px;"/>
-        <h2 style="color:#f5b841; margin-top:0.5rem;">PROCASEF Boundou</h2>
-        <p style="color:#ddd; font-size:14px;">Tableau de bord interactif</p>
-        <hr style="border:1px solid #f5b841;">
-    </div>
-    """, unsafe_allow_html=True)
+        st.markdown("""
+        <div style="text-align:center; margin-bottom:1rem;">
+            <img src="logo/BETPLUSAUDETAG.jpg" alt="Logo" style="width:120px; border-radius:12px;"/>
+            <h2 style="color:#f5b841; margin-top:0.5rem;">PROCASEF Boundou</h2>
+            <p style="color:#ddd; font-size:14px;">Tableau de bord interactif</p>
+            <hr style="border:1px solid #f5b841;">
+        </div>
+        """, unsafe_allow_html=True)
 
     selected = option_menu(
         menu_title=None,
