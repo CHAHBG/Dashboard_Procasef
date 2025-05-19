@@ -4,6 +4,12 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
+st.set_page_config(
+    page_title="Tableau de bord des parcelles",
+    page_icon="📊",
+    layout="wide"
+)
+
 
 def afficher_repartition(df_parcelles):
     """
