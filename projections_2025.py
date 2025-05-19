@@ -1,4 +1,12 @@
 import streamlit as st
+
+# Configuration de la page - DOIT ÊTRE LA PREMIÈRE COMMANDE STREAMLIT
+st.set_page_config(
+    page_title="Suivi des Inventaires 2025",
+    page_icon="📊",
+    layout="wide"
+)
+
 import pandas as pd
 import altair as alt
 import time
@@ -241,10 +249,6 @@ def afficher_projections_2025():
     st.subheader("📋 Données complètes")
     st.dataframe(df, use_container_width=True)
 
+# Appel de la fonction principale
 if __name__ == "__main__":
-    st.set_page_config(
-        page_title="Suivi des Inventaires 2025",
-        page_icon="📊",
-        layout="wide"
-    )
     afficher_projections_2025()
