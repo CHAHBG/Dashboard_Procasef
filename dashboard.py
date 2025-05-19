@@ -113,7 +113,7 @@ def main():
 
     if selected == "Répartition des parcelles":
         df_parcelles = charger_parcelles()
-        repartParcelles.afficher_repartition(df_parcelles)
+        repartParcelles.afficher_dashboard_parcelles(df_parcelles)
 
     elif selected == "État d'avancement":
         df_etapes = charger_etapes()
