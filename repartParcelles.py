@@ -7,59 +7,46 @@ import plotly.graph_objects as go
 
 def afficher_repartition(df_parcelles):
     """
-    Affiche l'onglet de répartition des parcelles
-
-    Args:
-        df_parcelles (DataFrame): Dataframe contenant les données des parcelles
+    Affiche l'onglet de répartition des parcelles avec des onglets (tabs)
     """
-    # ========================
-    # Statistiques Globales
-    # ========================
-    with st.expander("📌 Statistiques Globales", expanded=True):
+
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+        "📌 Statistiques Globales",
+        "📊 NICAD & Délibérations",
+        "🏗️ Répartition par usage",
+        "📍 Commune & Village",
+        "🏘️ Répartition par commune",
+        "📈 Taux de délibération",
+        "🧾 Données filtrées"
+    ])
+
+    with tab1:
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Nombre total de parcelles", len(df_parcelles))
         col2.metric("Parcelles NICAD", (df_parcelles["nicad"] == "Avec NICAD").sum())
         col3.metric("Parcelles délibérées (🔄)", (df_parcelles["statut_deliberation"] == "Délibérée").sum())
         col4.metric("Superficie totale (m²)", f"{df_parcelles['superficie'].sum():,.2f}")
 
-    # ========================
-    # Répartition NICAD globale
-    # ========================
-    afficher_repartition_nicad_globale(df_parcelles)
+    with tab2:
+        afficher_repartition_nicad_globale(df_parcelles)
+        afficher_relation_nicad_deliberation(df_parcelles)
 
-    # ========================
-    # Relation entre NICAD et délibération
-    # ========================
-    afficher_relation_nicad_deliberation(df_parcelles)
+    with tab3:
+        afficher_repartition_par_usage(df_parcelles)
 
-    # ========================
-    # Répartition par Usage
-    # ========================
-    afficher_repartition_par_usage(df_parcelles)
+    with tab4:
+        afficher_stats_commune_village(df_parcelles)
 
-    # ========================
-    # Statistiques par commune et village
-    # ========================
-    afficher_stats_commune_village(df_parcelles)
+    with tab5:
+        afficher_repartition_par_commune(df_parcelles)
 
-    # ========================
-    # Statistiques par commune (Bar chart)
-    # ========================
-    afficher_repartition_par_commune(df_parcelles)
+    with tab6:
+        afficher_taux_deliberation_commune(df_parcelles)
 
-    # ========================
-    # Taux de délibération par commune
-    # ========================
-    afficher_taux_deliberation_commune(df_parcelles)
-
-    # ========================
-    # Données filtrées
-    # ========================
-    with st.expander("🧾 Données filtrées", expanded=True):
+    with tab7:
         colonnes_affichees = ["commune", "village", "nicad", "statut_deliberation", "superficie"]
         if "type_usag" in df_parcelles.columns:
             colonnes_affichees.append("type_usag")
-
         st.dataframe(df_parcelles[colonnes_affichees], use_container_width=True)
 
 
