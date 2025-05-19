@@ -131,16 +131,106 @@ def afficher_projections_2025():
     objectif_total = df["objectif_total"].iloc[-1]
     realises_total = 20558
     progression_pct = (realises_total / objectif_total) * 100 if objectif_total else 0
+    # Animation de vague en haut de la page avec les métriques principales
+    st.subheader("📌 Progression des levés réalisés")
     
-    # Affichage en deux colonnes
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns([2, 5, 2])
     
-    # Affichage du métrique dans la première colonne
-    col1.metric("📌 Levés réalisés", f"{realises_total:,}", f"{progression_pct:.1f} %")
+    # Affichage des métriques dans la première colonne
+    col1.metric("Total réalisés", f"{realises_total:,}", f"{progression_pct:.1f} %")
+    col1.metric("Objectif total", f"{objectif_total:,}")
     
-    # Animation de vague personnalisée dans la deuxième colonne
-    wave_html = wave_animation(realises_total, objectif_total, f"{progression_pct:.1f}% atteint")
-    col2.markdown(wave_html, unsafe_allow_html=True)
+    # Grande animation de vague au centre
+    wave_container_css = """
+    <style>
+    .big-wave-container {
+        position: relative;
+        width: 100%;
+        height: 180px;
+        overflow: hidden;
+        border-radius: 15px;
+        margin: 10px 0 20px 0;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        background: #f0f2f6;
+    }
+    
+    .big-wave {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom, rgba(76, 175, 80, 0.8), rgba(76, 175, 80, 0.3));
+        border-radius: 0 0 50% 50%;
+        animation: big-wave 3s infinite ease-in-out;
+        transform-origin: center bottom;
+    }
+    
+    .big-wave:nth-child(2) {
+        animation-delay: 0.6s;
+        opacity: 0.6;
+    }
+    
+    .big-wave:nth-child(3) {
+        animation-delay: 1.2s;
+        opacity: 0.4;
+    }
+    
+    .big-wave-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #000;
+        font-size: 32px;
+        font-weight: bold;
+        z-index: 10;
+        text-shadow: 1px 1px 2px rgba(255,255,255,0.7);
+    }
+    
+    .big-wave-subtext {
+        position: absolute;
+        top: 65%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #333;
+        font-size: 18px;
+        z-index: 10;
+    }
+    
+    @keyframes big-wave {
+        0% {
+            transform: translateY(80%) scaleY(0.2);
+        }
+        50% {
+            transform: translateY(30%) scaleY(0.5);
+        }
+        100% {
+            transform: translateY(80%) scaleY(0.2);
+        }
+    }
+    </style>
+    """
+    
+    big_wave_html = f"""
+    {wave_container_css}
+    <div class="big-wave-container">
+        <div class="big-wave" style="bottom: {100-progression_pct}%;"></div>
+        <div class="big-wave" style="bottom: {100-progression_pct}%;"></div>
+        <div class="big-wave" style="bottom: {100-progression_pct}%;"></div>
+        <div class="big-wave-text">{progression_pct:.1f}%</div>
+        <div class="big-wave-subtext">des levés réalisés</div>
+    </div>
+    """
+    
+    col2.markdown(big_wave_html, unsafe_allow_html=True)
+    
+    # Informations complémentaires dans la troisième colonne
+    dernier_mois_str = df["mois"].iloc[-1] if not df.empty else "N/A"
+    col3.metric("Dernier mois", f"{dernier_mois_str}")
+    
+    # Calcul du rythme mensuel
+    mois_ecoules = len(df)
+    moyenne_mensuelle = realises_total / mois_ecoules if mois_ecoules > 0 else 0
+    col3.metric("Moyenne mensuelle", f"{moyenne_mensuelle:.0f}")
     
     st.markdown("---")
     
@@ -159,22 +249,100 @@ def afficher_projections_2025():
     # Fusionner les deux dataframes
     chart_data = pd.concat([df_realises, df_objectifs])
     
-    # Créer le graphique avec Altair
-    bar_chart = alt.Chart(chart_data).mark_bar().encode(
+    # Créer le graphique avec Altair - Avec animation de vague pour les réalisations
+    selection = alt.selection_point(fields=['mois'], bind='legend')
+    
+    # Créer le graphique de base
+    bar_base = alt.Chart(chart_data).encode(
         x=alt.X("mois:N", title="Mois", sort=list(df["mois"])),
         y=alt.Y("Nombre:Q", title="Nombre d'inventaires"),
-        color=alt.Color(
-            "Type:N", 
-            title="",
-            scale=alt.Scale(
-                domain=["Réalisés", "Objectif mensuel"],
-                range=["seagreen", "lightgray"]
-            )
-        ),
         tooltip=["mois:N", "Type:N", "Nombre:Q"]
     ).properties(height=400)
     
-    st.altair_chart(bar_chart, use_container_width=True)
+    # Barres pour les objectifs (en gris clair)
+    objectif_bars = bar_base.transform_filter(
+        alt.datum.Type == 'Objectif mensuel'
+    ).mark_bar(color='lightgray').encode(
+        opacity=alt.condition(selection, alt.value(0.7), alt.value(0.3))
+    )
+    
+    # Barres pour les réalisations (en vert avec effet de vague)
+    realises_bars = bar_base.transform_filter(
+        alt.datum.Type == 'Réalisés'
+    ).mark_bar(color='seagreen').encode(
+        opacity=alt.condition(selection, alt.value(1), alt.value(0.5))
+    )
+    
+    # Ajout de texte pour les valeurs
+    text = bar_base.mark_text(
+        align='center',
+        baseline='middle',
+        dy=-10,
+        color='black'
+    ).encode(
+        text=alt.Text('Nombre:Q', format='.0f')
+    )
+    
+    # Combiner les graphiques
+    bar_chart = objectif_bars + realises_bars + text
+    
+    # Ajouter l'animation avec JavaScript (pour simuler l'effet de vague)
+    st.markdown("""
+    <style>
+    @keyframes wave-animation {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-3px); }
+        100% { transform: translateY(0px); }
+    }
+    
+    .wave-effect rect.seagreen {
+        animation: wave-animation 2s infinite ease-in-out;
+    }
+    
+    /* Appliquer un délai d'animation différent pour chaque barre */
+    .wave-effect rect.seagreen:nth-child(1) { animation-delay: 0.0s; }
+    .wave-effect rect.seagreen:nth-child(2) { animation-delay: 0.2s; }
+    .wave-effect rect.seagreen:nth-child(3) { animation-delay: 0.4s; }
+    .wave-effect rect.seagreen:nth-child(4) { animation-delay: 0.6s; }
+    .wave-effect rect.seagreen:nth-child(5) { animation-delay: 0.8s; }
+    .wave-effect rect.seagreen:nth-child(6) { animation-delay: 1.0s; }
+    .wave-effect rect.seagreen:nth-child(7) { animation-delay: 1.2s; }
+    .wave-effect rect.seagreen:nth-child(8) { animation-delay: 1.4s; }
+    .wave-effect rect.seagreen:nth-child(9) { animation-delay: 1.6s; }
+    .wave-effect rect.seagreen:nth-child(10) { animation-delay: 1.8s; }
+    .wave-effect rect.seagreen:nth-child(11) { animation-delay: 2.0s; }
+    .wave-effect rect.seagreen:nth-child(12) { animation-delay: 2.2s; }
+    </style>
+    
+    <script>
+    // Cette fonction sera exécutée une fois que le graphique est chargé
+    function applyWaveEffect() {
+        // Sélectionner tous les éléments rect avec la classe 'seagreen'
+        let elements = document.querySelectorAll('.seagreen');
+        
+        // Ajouter une classe pour appliquer l'animation
+        elements.forEach(el => {
+            el.parentNode.classList.add('wave-effect');
+        });
+    }
+    
+    // Appliquer l'effet après un court délai pour s'assurer que le graphique est chargé
+    setTimeout(applyWaveEffect, 1000);
+    </script>
+    """, unsafe_allow_html=True)
+    
+    # Afficher le graphique
+    chart_container = st.container()
+    with chart_container:
+        st.altair_chart(bar_chart, use_container_width=True)
+        
+        # Créer un conteneur pour le texte explicatif sous le graphique
+        with st.expander("Comment lire ce graphique", expanded=False):
+            st.markdown("""
+            - Les **barres vertes** représentent les levés **réalisés** chaque mois
+            - Les **barres grises** représentent l'**objectif mensuel** à atteindre
+            - L'**animation de vague** sur les barres vertes permet de visualiser la progression
+            """)
     
     st.markdown("---")
     st.subheader("📈 Évolution de l'objectif cumulé")
