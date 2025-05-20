@@ -32,7 +32,29 @@ def charger_parcelles():
     df["village"] = df["village"].fillna("Non spécifié").replace("", "Non spécifié")
     df["commune"] = df["commune"].fillna("Non spécifié").replace("", "Non spécifié")
     return df
+    
+@st.cache_data
+def charger_levee_par_commune():
+    try:
+        df = pd.read_excel("data/Levee par commune Terrain_URM.xlsx", engine="openpyxl")
+        df.fillna("", inplace=True)
+        df.columns = df.columns.str.lower()
+        return df
+    except Exception as e:
+        st.error(f"Erreur lors du chargement du fichier de levée par commune: {e}")
+        return pd.DataFrame()
 
+@st.cache_data
+def charger_parcelles_terrain_periode():
+    try:
+        df = pd.read_excel("data/Parcelles_terrain_periode.xlsx", engine="openpyxl")
+        df.fillna("", inplace=True)
+        df.columns = df.columns.str.lower()
+        return df
+    except Exception as e:
+        st.error(f"Erreur lors du chargement du fichier des parcelles par période: {e}")
+        return pd.DataFrame()
+        
 @st.cache_data
 def charger_etapes():
     df = pd.read_excel("data/Etat des opérations Boundou-Mai 2025.xlsx", engine="openpyxl")
