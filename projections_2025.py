@@ -1,11 +1,5 @@
 import streamlit as st
 
-# Configuration de la page - DOIT ÊTRE LA PREMIÈRE COMMANDE STREAMLIT
-st.set_page_config(
-    page_title="Suivi des Inventaires 2025",
-    page_icon="📊",
-    layout="wide"
-)
 
 import pandas as pd
 import altair as alt
