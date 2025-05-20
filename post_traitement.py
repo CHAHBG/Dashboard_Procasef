@@ -13,13 +13,6 @@ from datetime import datetime
 import calendar
 import locale
 
-# Configuration de la page
-st.set_page_config(
-    page_title="Statistiques Parcelles URM",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 # Configurer la locale pour les noms de mois en français
 try:
