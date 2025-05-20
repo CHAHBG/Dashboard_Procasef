@@ -246,12 +246,6 @@ def afficher_dashboard_parcelles(df_parcelles):
 
 
 # Exemple d'utilisation
-if __name__ == "__main__":
-    st.set_page_config(
-        page_title="Tableau de Bord des Parcelles", 
-        page_icon="📊",
-        layout="wide"
-    )
     
     # Chargement des données (exemple)
     # Remplacer cette partie par votre propre chargement de données
