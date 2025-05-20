@@ -42,7 +42,6 @@ def afficher_post_traitement(df_post_traitement):
 
         df_filtre = df_levee if commune_sel == "Toutes" else df_levee[df_levee['commune'] == commune_sel]
 
-        # Graphe comparaison par commune
         if "parcelles terrain" in df_filtre.columns and "parcelles delimitées et enquetées (fourni par l'opérateur)(urm)" in df_filtre.columns:
             fig = go.Figure([
                 go.Bar(name="Parcelles Terrain", x=df_filtre['commune'], y=df_filtre['parcelles terrain']),
@@ -52,7 +51,6 @@ def afficher_post_traitement(df_post_traitement):
                               title="Comparaison par commune", legend_title="Type")
             st.plotly_chart(fig, use_container_width=True)
 
-            # Graphe par région
             if 'region' in df_levee.columns:
                 st.markdown("### 🌍 Comparaison par région")
                 df_region = df_levee.groupby('region')[
@@ -76,11 +74,30 @@ def afficher_post_traitement(df_post_traitement):
         commune_options = df_parcelles['commune'].dropna().unique()
         commune_sel = st.selectbox("Choisir une commune", ["Toutes"] + sorted(commune_options))
 
+        # Conversion explicite des dates
         date_min = df_parcelles['date de debut'].min()
         date_max = df_parcelles['date de fin'].max()
 
-        date_range = st.slider("Filtrer par période", min_value=date_min, max_value=date_max,
-                               value=(date_min, date_max), format="YYYY-MM-DD")
+        # Vérification des dates valides
+        if pd.isnull(date_min) or pd.isnull(date_max):
+            st.warning("Dates invalides ou manquantes dans les données.")
+            return
+
+        date_min = pd.to_datetime(date_min).to_pydatetime()
+        date_max = pd.to_datetime(date_max).to_pydatetime()
+
+        if date_min >= date_max:
+            st.warning("La date de début est postérieure à la date de fin.")
+            return
+
+        # Slider de dates corrigé
+        date_range = st.slider(
+            "Filtrer par période",
+            min_value=date_min,
+            max_value=date_max,
+            value=(date_min, date_max),
+            format="YYYY-MM-DD"
+        )
 
         df_filtre = df_parcelles[
             (df_parcelles['date de debut'] >= date_range[0]) &
@@ -108,4 +125,3 @@ def afficher_post_traitement(df_post_traitement):
 
         with st.expander("📋 Voir les données filtrées"):
             st.dataframe(df_filtre)
-
