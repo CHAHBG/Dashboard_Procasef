@@ -432,12 +432,4 @@ def afficher_progression(df_etapes=None):
     afficher_etat_avancement(df_etapes)
 
 
-if __name__ == "__main__":
-    # Ce code s'exécute uniquement si le fichier est exécuté directement
-    # Utile pour les tests
-    st.set_page_config(
-        page_title="PROCASEF - État d'avancement",
-        page_icon="📊",
-        layout="wide"
-    )
     afficher_etat_avancement()
