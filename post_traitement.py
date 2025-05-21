@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
+from dashboard import charger_levee_par_commune
+from dashboard import charger_parcelles_terrain_periode
 
 def afficher_analyse_parcelles():
     """Module d'analyse des parcelles et levées pour le tableau de bord PROCASEF"""
