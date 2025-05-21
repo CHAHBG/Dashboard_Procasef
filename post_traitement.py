@@ -12,7 +12,7 @@ st.title("📊 Analyse des Parcelles et Levées")
 def charger_levee_par_commune():
     """Charge les données de levée par commune"""
     try:
-        df = pd.read_excel("Levee par commune Terrain_URM.xlsx", engine="openpyxl")
+        df = pd.read_excel("data/Levee par commune Terrain_URM.xlsx", engine="openpyxl")
         df.columns = df.columns.str.strip().str.lower()
         df = df.fillna({'commune': 'Non spécifié', 'region': 'Non spécifié'})
         return df
@@ -24,7 +24,7 @@ def charger_levee_par_commune():
 def charger_parcelles_terrain_periode():
     """Charge les données des parcelles terrain par période"""
     try:
-        df = pd.read_excel("Parcelles_terrain_periode.xlsx", engine="openpyxl")
+        df = pd.read_excel("data/Parcelles_terrain_periode.xlsx", engine="openpyxl")
         df.columns = df.columns.str.strip().str.lower()
         for col in ['date de debut', 'date de fin']:
             if col in df.columns:
@@ -38,7 +38,7 @@ def charger_parcelles_terrain_periode():
 def charger_parcelles_post_traitement():
     """Charge les données des parcelles post-traitées par géométrie"""
     try:
-        df = pd.read_excel("Parcelles post traites par geom.xlsx", engine="openpyxl")
+        df = pd.read_excel("data/Parcelles post traites par geom.xlsx", engine="openpyxl")
         df.columns = df.columns.str.strip().str.lower()
         return df
     except Exception as e:
