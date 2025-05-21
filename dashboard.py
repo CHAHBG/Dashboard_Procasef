@@ -2,13 +2,12 @@ import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
 
-# Imports modules internes
+# Modules internes
 import repartParcelles
 import progression
 from projections_2025 import afficher_projections_2025
 import genre_dashboard
 import post_traitement
-# Nous supprimons cette ligne: import analyse_parcelles
 
 # Configuration de la page
 st.set_page_config(
@@ -24,17 +23,36 @@ def charger_parcelles():
     df.columns = df.columns.str.lower()
     df["nicad"] = df["nicad"].astype(str).str.strip().str.lower() == "oui"
     df["nicad"] = df["nicad"].map({True: "Avec NICAD", False: "Sans NICAD"})
+    
     if "deliberee" in df.columns:
         df["deliberee"] = df["deliberee"].astype(str).str.strip().str.lower() == "oui"
         df["statut_deliberation"] = df["deliberee"].map({True: "Délibérée", False: "Non délibérée"})
     else:
         df["statut_deliberation"] = "Non délibérée"
+    
     df["superficie"] = pd.to_numeric(df["superficie"], errors="coerce")
     df["village"] = df["village"].fillna("Non spécifié").replace("", "Non spécifié")
     df["commune"] = df["commune"].fillna("Non spécifié").replace("", "Non spécifié")
-    return df
     
-        
+    return df
+
+@st.cache_data
+def charger_levee_par_commune():
+    df = pd.read_excel("data/Levee par commune Terrain_URM.xlsx", engine="openpyxl")
+    df.fillna("", inplace=True)
+    return df
+
+
+@st.cache_data
+def charger_parcelles_terrain_periode():
+    df = pd.read_excel("data/Parcelles_terrain_periode.xlsx", engine="openpyxl")
+    df.columns = df.columns.str.lower()
+    df["superficie"] = pd.to_numeric(df["superficie"], errors="coerce")
+    df["commune"] = df["commune"].fillna("Non spécifié").replace("", "Non spécifié")
+    df["periode"] = df["periode"].fillna("Non spécifié").replace("", "Non spécifié")
+    return df
+
+
 @st.cache_data
 def charger_etapes():
     df = pd.read_excel("data/Etat des opérations Boundou-Mai 2025.xlsx", engine="openpyxl")
@@ -42,11 +60,9 @@ def charger_etapes():
     return df
 
 
-
 def main():
-    # --- SIDEBAR STYLÉE ---
+    # --- SIDEBAR ---
     with st.sidebar:
-        # Appliquer style fond bleu nuit
         st.markdown(
             """
             <style>
@@ -58,10 +74,8 @@ def main():
             unsafe_allow_html=True
         )
 
-        # Afficher logo centré
         st.image("logo/BETPLUSAUDETAG.jpg", width=120)
 
-        # Titre et description
         st.markdown(
             """
             <div style='text-align:center;'>
@@ -73,7 +87,6 @@ def main():
             unsafe_allow_html=True
         )
 
-        # Menu de navigation
         selected = option_menu(
             menu_title=None,
             options=[
@@ -81,10 +94,10 @@ def main():
                 "État d'avancement",
                 "Projections 2025",
                 "Répartition du genre",
-                "Analyse des parcelles",  # Nouvel onglet ajouté
+                "Analyse des parcelles",  # ✔️ Conservé
                 "Post-traitement"
             ],
-            icons=["map", "bar-chart-line", "calendar", "gender-female", "search", "gear"],  # Icône ajoutée
+            icons=["map", "bar-chart-line", "calendar", "gender-female", "search", "gear"],
             menu_icon="cast",
             default_index=0,
             styles={
@@ -103,7 +116,7 @@ def main():
             }
         )
 
-    # --- CONTENU PRINCIPAL ---
+    # --- CONTENU ---
     st.title("📊 Tableau de Bord PROCASEF - Boundou")
 
     if selected == "Répartition des parcelles":
@@ -120,10 +133,11 @@ def main():
     elif selected == "Répartition du genre":
         genre_dashboard.afficher_repartition_genre()
         
-    elif selected == "Post-traitement":  # Nouvel onglet
-        # Modification ici: utilisation de post_traitement.afficher_analyse_parcelles() au lieu de analyse_parcelles.afficher_analyse_parcelles()
+    elif selected == "Analyse des parcelles":  # ✔️ Utilise maintenant post_traitement
         post_traitement.afficher_analyse_parcelles()
 
+    elif selected == "Post-traitement":
+        post_traitement.afficher_analyse_parcelles()  # Ou une autre fonction si différente
 
 if __name__ == "__main__":
     main()
