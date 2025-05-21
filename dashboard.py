@@ -8,7 +8,7 @@ import progression
 from projections_2025 import afficher_projections_2025
 import genre_dashboard
 import post_traitement
-import analyse_parcelles  # Importer le nouveau module
+import post_traitement  # Importer le nouveau module
 
 # Configuration de la page
 st.set_page_config(
@@ -153,7 +153,7 @@ def main():
         genre_dashboard.afficher_repartition_genre()
         
     elif selected == "Analyse des parcelles":  # Nouvel onglet
-        analyse_parcelles.afficher_analyse_parcelles()
+        post_traiement.afficher_analyse_parcelles()
 
     elif selected == "Post-traitement":
         df_post = charger_post_traitement()
