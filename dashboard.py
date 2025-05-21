@@ -152,13 +152,10 @@ def main():
     elif selected == "Répartition du genre":
         genre_dashboard.afficher_repartition_genre()
         
-    elif selected == "Analyse des parcelles":  # Nouvel onglet
+    elif selected == "Post-traitement":  # Nouvel onglet
         # Modification ici: utilisation de post_traitement.afficher_analyse_parcelles() au lieu de analyse_parcelles.afficher_analyse_parcelles()
         post_traitement.afficher_analyse_parcelles()
 
-    elif selected == "Post-traitement":
-        df_post = charger_post_traitement()
-        post_traitement.afficher_post_traitement(df_post)
 
 if __name__ == "__main__":
     main()
