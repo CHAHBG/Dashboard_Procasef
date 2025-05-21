@@ -5,12 +5,16 @@ import plotly.graph_objects as go
 import numpy as np
 from datetime import datetime
 
+#st.set_page_config(page_title="Analyse des Parcelles", layout="wide")
+st.title("📊 Analyse des Parcelles et Levées")
+
 @st.cache_data
 def charger_levee_par_commune():
+    """Charge les données de levée par commune"""
     try:
-        df = pd.read_excel("data/Levee par commune Terrain_URM.xlsx", engine="openpyxl")
+        df = pd.read_excel("Levee par commune Terrain_URM.xlsx", engine="openpyxl")
         df.columns = df.columns.str.strip().str.lower()
-        df = df.fillna({'commune': 'Non spécifié'})
+        df = df.fillna({'commune': 'Non spécifié', 'region': 'Non spécifié'})
         return df
     except Exception as e:
         st.error(f"Erreur fichier levée commune : {e}")
@@ -18,8 +22,9 @@ def charger_levee_par_commune():
 
 @st.cache_data
 def charger_parcelles_terrain_periode():
+    """Charge les données des parcelles terrain par période"""
     try:
-        df = pd.read_excel("data/Parcelles_terrain_periode.xlsx", engine="openpyxl")
+        df = pd.read_excel("Parcelles_terrain_periode.xlsx", engine="openpyxl")
         df.columns = df.columns.str.strip().str.lower()
         for col in ['date de debut', 'date de fin']:
             if col in df.columns:
@@ -33,287 +38,431 @@ def charger_parcelles_terrain_periode():
 def charger_parcelles_post_traitement():
     """Charge les données des parcelles post-traitées par géométrie"""
     try:
-        df = pd.read_excel("data/Parcelles post traites par geom.xlsx", engine="openpyxl")
+        df = pd.read_excel("Parcelles post traites par geom.xlsx", engine="openpyxl")
         df.columns = df.columns.str.strip().str.lower()
-        
-        # Conversion de dates si nécessaire
-        date_columns = [col for col in df.columns if 'date' in col.lower()]
-        for col in date_columns:
-            df[col] = pd.to_datetime(df[col], errors='coerce')
-            
         return df
     except Exception as e:
         st.error(f"Erreur fichier parcelles post-traitées : {e}")
         return pd.DataFrame()
 
-def afficher_post_traitement(df_post_traitement=None):
-    st.subheader("⚙️ Module de Post-traitement")
+# Chargement des données
+df_levee = charger_levee_par_commune()
+df_parcelles = charger_parcelles_terrain_periode()
+df_post_traitement = charger_parcelles_post_traitement()
 
-    df_levee = charger_levee_par_commune()
-    df_parcelles = charger_parcelles_terrain_periode()
-    df_post_traitement = charger_parcelles_post_traitement()
+# Création de 3 onglets pour l'analyse
+tab1, tab2, tab3 = st.tabs(["🏘️ Levées par Commune/Région", "📆 Évolution Temporelle", "📊 Post-traitement Géométrique"])
 
-    # Création de 3 onglets pour le module
-    tab1, tab2, tab3 = st.tabs(["🏘️ Communes & Régions", "📆 Par périodes", "📊 Post-traitement géométrique"])
-
-    with tab1:
-        st.markdown("### 📊 Comparaison des Parcelles Terrain vs URM")
-        communes = df_levee['commune'].unique()
-        commune_sel = st.selectbox("Filtrer par commune", ["Toutes"] + list(communes), key='commune_tab1')
-
-        df_filtre = df_levee if commune_sel == "Toutes" else df_levee[df_levee['commune'] == commune_sel]
-
-        if "parcelles terrain" in df_filtre.columns and "parcelles delimitées et enquetées (fourni par l'opérateur)(urm)" in df_filtre.columns:
-            fig = go.Figure([
-                go.Bar(name="Parcelles Terrain", x=df_filtre['commune'], y=df_filtre['parcelles terrain']),
-                go.Bar(name="Parcelles URM", x=df_filtre['commune'], y=df_filtre["parcelles delimitées et enquetées (fourni par l'opérateur)(urm)"])
-            ])
-            fig.update_layout(barmode='group', xaxis_tickangle=-45,
-                              title="Comparaison par commune", legend_title="Type")
-            st.plotly_chart(fig, use_container_width=True)
-
-            if 'region' in df_levee.columns:
-                st.markdown("### 🌍 Comparaison par région")
-                df_region = df_levee.groupby('region')[
-                    ['parcelles terrain', "parcelles delimitées et enquetées (fourni par l'opérateur)(urm)"]
-                ].sum().reset_index()
-
-                fig2 = go.Figure([
-                    go.Bar(name="Parcelles Terrain", x=df_region['region'], y=df_region['parcelles terrain']),
-                    go.Bar(name="Parcelles URM", x=df_region['region'], y=df_region["parcelles delimitées et enquetées (fourni par l'opérateur)(urm)"])
-                ])
-                fig2.update_layout(barmode='group', xaxis_tickangle=-45,
-                                   title="Comparaison par région", legend_title="Type")
-                st.plotly_chart(fig2, use_container_width=True)
-
-    with tab2:
-        st.markdown("### 📆 Évolution temporelle des levées")
-        if df_parcelles.empty:
-            st.warning("Aucune donnée disponible.")
-            return
-
-        commune_options = df_parcelles['commune'].dropna().unique()
-        commune_sel = st.selectbox("Choisir une commune", ["Toutes"] + sorted(commune_options), key='commune_tab2')
-
-        # Conversion explicite des dates
-        date_min = df_parcelles['date de debut'].min()
-        date_max = df_parcelles['date de fin'].max()
-
-        # Vérification des dates valides
-        if pd.isnull(date_min) or pd.isnull(date_max):
-            st.warning("Dates invalides ou manquantes dans les données.")
-            return
-
-        date_min = pd.to_datetime(date_min).to_pydatetime()
-        date_max = pd.to_datetime(date_max).to_pydatetime()
-
-        if date_min >= date_max:
-            st.warning("La date de début est postérieure à la date de fin.")
-            return
-
-        # Slider de dates corrigé
-        date_range = st.slider(
-            "Filtrer par période",
-            min_value=date_min,
-            max_value=date_max,
-            value=(date_min, date_max),
-            format="YYYY-MM-DD"
-        )
-
-        df_filtre = df_parcelles[
-            (df_parcelles['date de debut'] >= date_range[0]) &
-            (df_parcelles['date de fin'] <= date_range[1])
-        ]
-        if commune_sel != "Toutes":
-            df_filtre = df_filtre[df_filtre['commune'] == commune_sel]
-
-        if df_filtre.empty:
-            st.warning("Aucune donnée pour cette sélection.")
-            return
-
-        df_filtre['periode'] = df_filtre['date de debut'].dt.to_period('M').astype(str)
-
-        evolution = df_filtre.groupby('periode').size().reset_index(name='Nombre')
-        fig = px.line(evolution, x='periode', y='Nombre', markers=True,
-                      title="Évolution des levées par période")
-        st.plotly_chart(fig, use_container_width=True)
-
-        if 'statut' in df_filtre.columns:
-            statuts = df_filtre.groupby(['periode', 'statut']).size().reset_index(name='count')
-            fig2 = px.line(statuts, x='periode', y='count', color='statut', markers=True,
-                           title="Évolution par statut")
-            st.plotly_chart(fig2, use_container_width=True)
-
-        with st.expander("📋 Voir les données filtrées"):
-            st.dataframe(df_filtre)
+# Onglet 1: Analyse des levées par commune et région
+with tab1:
+    st.header("🏘️ Analyse des Levées par Commune et Région")
+    
+    if not df_levee.empty:
+        # Vérification des colonnes
+        expected_cols = ['region', 'commune', 'parcelles terrain', 'parcelles delimitées et enquetées (fourni par l\'opérateur)(urm)']
+        missing_cols = [col for col in expected_cols if col not in df_levee.columns]
+        
+        if missing_cols:
+            st.warning(f"Attention: Les colonnes suivantes sont manquantes dans le fichier: {', '.join(missing_cols)}")
+            st.write("Colonnes disponibles:", df_levee.columns.tolist())
+        else:
+            # Filtrage par région
+            regions = df_levee['region'].unique()
+            region_sel = st.selectbox("Filtrer par région", ["Toutes"] + list(regions), key='region_filter')
             
-    with tab3:
-        st.markdown("### 📊 Analyse post-traitement géométrique")
-        
-        if df_post_traitement.empty:
-            st.warning("Aucune donnée de post-traitement disponible.")
-            return
+            df_filtre = df_levee if region_sel == "Toutes" else df_levee[df_levee['region'] == region_sel]
             
-        # Afficher les statistiques de base sur les parcelles post-traitées
-        st.markdown("#### 📈 Statistiques générales")
-        
-        # Créer une colonne pour afficher les colonnes importantes et leurs statistiques
-        col1, col2 = st.columns(2)
-        
-        # Nombre total de parcelles post-traitées
-        with col1:
-            total_parcelles = len(df_post_traitement)
-            st.metric("Nombre total de parcelles", total_parcelles)
+            # Graphique par commune
+            st.subheader("📊 Comparaison des Parcelles par Commune")
             
-            # Vérifier si les colonnes de géométrie existent
-            if 'superficie' in df_post_traitement.columns:
-                superficie_moyenne = df_post_traitement['superficie'].mean()
-                st.metric("Superficie moyenne (m²)", f"{superficie_moyenne:.2f}")
-            
-        with col2:
-            # Vérifie si une colonne de statut existe (hypothèse basée sur le code existant)
-            if 'statut' in df_post_traitement.columns:
-                statut_counts = df_post_traitement['statut'].value_counts()
-                fig = px.pie(
-                    values=statut_counts.values,
-                    names=statut_counts.index,
-                    title="Répartition par statut"
-                )
-                st.plotly_chart(fig, use_container_width=True)
-            elif 'etat' in df_post_traitement.columns:
-                statut_counts = df_post_traitement['etat'].value_counts()
-                fig = px.pie(
-                    values=statut_counts.values,
-                    names=statut_counts.index,
-                    title="Répartition par état"
-                )
-                st.plotly_chart(fig, use_container_width=True)
-        
-        # Filtres
-        st.markdown("#### 🔍 Filtres")
-        
-        # Créer des filtres en fonction des colonnes disponibles
-        col_filters = st.columns(3)
-        
-        filter_columns = []
-        # Chercher des colonnes pertinentes pour le filtrage
-        for col in df_post_traitement.columns:
-            if col in ['commune', 'region', 'departement', 'statut', 'etat', 'type', 'categorie']:
-                filter_columns.append(col)
-        
-        # Limiter à 3 colonnes au maximum pour éviter l'encombrement
-        filter_columns = filter_columns[:3]
-        
-        # Créer les filtres
-        selected_filters = {}
-        for i, col in enumerate(filter_columns):
-            with col_filters[i % 3]:
-                unique_values = ["Tous"] + sorted(df_post_traitement[col].dropna().unique().tolist())
-                selected_filters[col] = st.selectbox(f"Filtrer par {col}", unique_values, key=f'post_filter_{col}')
-        
-        # Appliquer les filtres
-        df_filtered = df_post_traitement.copy()
-        for col, value in selected_filters.items():
-            if value != "Tous":
-                df_filtered = df_filtered[df_filtered[col] == value]
-        
-        # Afficher les graphiques d'analyse
-        st.markdown("#### 📊 Visualisations")
-        
-        # Déterminer quelles visualisations afficher en fonction des données disponibles
-        chart_tabs = st.tabs(["Tendances temporelles", "Comparaisons", "Distribution"])
-        
-        with chart_tabs[0]:
-            # Graphique de tendance temporelle (si des dates sont disponibles)
-            date_cols = [col for col in df_filtered.columns if 'date' in col.lower()]
-            if date_cols:
-                selected_date_col = st.selectbox("Sélectionner une date", date_cols)
-                if not pd.isna(df_filtered[selected_date_col]).all():
-                    # Grouper par mois/année
-                    df_filtered['mois_annee'] = df_filtered[selected_date_col].dt.to_period('M').astype(str)
-                    evolution = df_filtered.groupby('mois_annee').size().reset_index(name='count')
-                    
-                    fig = px.line(evolution, x='mois_annee', y='count', markers=True,
-                                title=f"Évolution par {selected_date_col}")
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.warning(f"Pas de données valides pour la colonne '{selected_date_col}'")
-            else:
-                st.info("Aucune colonne de date disponible pour les tendances temporelles")
-        
-        with chart_tabs[1]:
-            # Graphiques de comparaison
-            comparison_cols = [col for col in filter_columns if len(df_filtered[col].unique()) > 1 and len(df_filtered[col].unique()) <= 10]
-            if comparison_cols:
-                selected_comp_col = st.selectbox("Comparer par", comparison_cols)
-                
-                # Déterminer une colonne numérique pour la comparaison
-                numeric_cols = [col for col in df_filtered.columns if df_filtered[col].dtype in ['int64', 'float64']]
-                if numeric_cols:
-                    selected_metric = st.selectbox("Métrique", ["Compte"] + numeric_cols)
-                    
-                    if selected_metric == "Compte":
-                        # Compter le nombre d'occurrences
-                        comp_data = df_filtered[selected_comp_col].value_counts().reset_index()
-                        comp_data.columns = [selected_comp_col, 'count']
-                        
-                        fig = px.bar(comp_data, x=selected_comp_col, y='count',
-                                    title=f"Comparaison par {selected_comp_col}")
-                    else:
-                        # Utiliser une métrique numérique (somme, moyenne, etc.)
-                        agg_method = st.radio("Méthode d'agrégation", ["Somme", "Moyenne", "Médiane", "Max", "Min"])
-                        
-                        if agg_method == "Somme":
-                            comp_data = df_filtered.groupby(selected_comp_col)[selected_metric].sum().reset_index()
-                        elif agg_method == "Moyenne":
-                            comp_data = df_filtered.groupby(selected_comp_col)[selected_metric].mean().reset_index()
-                        elif agg_method == "Médiane":
-                            comp_data = df_filtered.groupby(selected_comp_col)[selected_metric].median().reset_index()
-                        elif agg_method == "Max":
-                            comp_data = df_filtered.groupby(selected_comp_col)[selected_metric].max().reset_index()
-                        else:  # Min
-                            comp_data = df_filtered.groupby(selected_comp_col)[selected_metric].min().reset_index()
-                        
-                        fig = px.bar(comp_data, x=selected_comp_col, y=selected_metric,
-                                    title=f"{agg_method} de {selected_metric} par {selected_comp_col}")
-                    
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.info("Aucune colonne numérique disponible pour les comparaisons")
-            else:
-                st.info("Pas assez de catégories distinctes pour les comparaisons")
-        
-        with chart_tabs[2]:
-            # Distribution des valeurs numériques
-            numeric_cols = [col for col in df_filtered.columns if df_filtered[col].dtype in ['int64', 'float64']]
-            if numeric_cols:
-                selected_dist_col = st.selectbox("Visualiser la distribution de", numeric_cols)
-                
-                fig = px.histogram(df_filtered, x=selected_dist_col,
-                                title=f"Distribution de {selected_dist_col}")
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # Ajouter des statistiques descriptives
-                stats = df_filtered[selected_dist_col].describe()
-                st.write("Statistiques descriptives:")
-                st.dataframe(stats)
-            else:
-                st.info("Aucune colonne numérique disponible pour l'analyse de distribution")
-        
-        # Afficher les données filtrées
-        with st.expander("📋 Voir les données filtrées"):
-            st.dataframe(df_filtered)
-            
-            # Option pour télécharger les données filtrées
-            csv = df_filtered.to_csv(index=False)
-            st.download_button(
-                label="Télécharger les données filtrées (CSV)",
-                data=csv,
-                file_name="parcelles_post_traitees_filtrees.csv",
-                mime="text/csv",
+            # Création d'un graphique à barres groupées
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=df_filtre['commune'],
+                y=df_filtre['parcelles terrain'],
+                name='Parcelles Terrain',
+                marker_color='royalblue'
+            ))
+            fig.add_trace(go.Bar(
+                x=df_filtre['commune'],
+                y=df_filtre['parcelles delimitées et enquetées (fourni par l\'opérateur)(urm)'],
+                name='Parcelles URM',
+                marker_color='firebrick'
+            ))
+
+            fig.update_layout(
+                title='Comparaison des Parcelles Terrain vs URM par Commune',
+                xaxis_tickangle=-45,
+                xaxis_title='Commune',
+                yaxis_title='Nombre de Parcelles',
+                barmode='group',
+                height=600
             )
 
-# Pour tester la fonction indépendamment (à commenter lors de l'intégration)
-# if __name__ == "__main__":
-#     st.set_page_config(page_title="Test Module Post-traitement", layout="wide")
-#     afficher_post_traitement()
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Si "Toutes" les régions sont sélectionnées, afficher aussi le graphique par région
+            if region_sel == "Toutes":
+                st.subheader("🌍 Comparaison des Parcelles par Région")
+                
+                # Agrégation par région
+                df_region = df_levee.groupby('region')[
+                    ['parcelles terrain', 'parcelles delimitées et enquetées (fourni par l\'opérateur)(urm)']
+                ].sum().reset_index()
+                
+                # Création du graphique par région
+                fig_region = go.Figure()
+                fig_region.add_trace(go.Bar(
+                    x=df_region['region'],
+                    y=df_region['parcelles terrain'],
+                    name='Parcelles Terrain',
+                    marker_color='royalblue'
+                ))
+                fig_region.add_trace(go.Bar(
+                    x=df_region['region'],
+                    y=df_region['parcelles delimitées et enquetées (fourni par l\'opérateur)(urm)'],
+                    name='Parcelles URM',
+                    marker_color='firebrick'
+                ))
+
+                fig_region.update_layout(
+                    title='Comparaison des Parcelles Terrain vs URM par Région',
+                    xaxis_tickangle=-45,
+                    xaxis_title='Région',
+                    yaxis_title='Nombre de Parcelles',
+                    barmode='group',
+                    height=500
+                )
+
+                st.plotly_chart(fig_region, use_container_width=True)
+            
+            # Afficher la table de données
+            with st.expander("📋 Voir les données"):
+                st.dataframe(df_filtre)
+    else:
+        st.error("Aucune donnée disponible pour l'analyse des levées par commune.")
+
+# Onglet 2: Évolution temporelle
+with tab2:
+    st.header("📆 Évolution Temporelle des Levées")
+    
+    if not df_parcelles.empty:
+        # Vérification des colonnes
+        expected_cols = ['date de debut', 'date de fin', 'commune', 'levee', 'lots']
+        missing_cols = [col for col in expected_cols if col not in df_parcelles.columns]
+        
+        if missing_cols:
+            st.warning(f"Attention: Les colonnes suivantes sont manquantes dans le fichier: {', '.join(missing_cols)}")
+            st.write("Colonnes disponibles:", df_parcelles.columns.tolist())
+        else:
+            # Filtres
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                commune_options = df_parcelles['commune'].dropna().unique()
+                commune_sel = st.selectbox("Filtrer par commune", ["Toutes"] + sorted(commune_options))
+            
+            with col2:
+                if 'lots' in df_parcelles.columns:
+                    lot_options = df_parcelles['lots'].dropna().unique()
+                    lot_sel = st.selectbox("Filtrer par lot", ["Tous"] + sorted(lot_options))
+                else:
+                    lot_sel = "Tous"
+            
+            # Filtres temporels
+            date_min = df_parcelles['date de debut'].min()
+            date_max = df_parcelles['date de fin'].max()
+            
+            if pd.isna(date_min) or pd.isna(date_max):
+                st.warning("Dates invalides ou manquantes dans les données.")
+            else:
+                date_min = pd.to_datetime(date_min).to_pydatetime()
+                date_max = pd.to_datetime(date_max).to_pydatetime()
+                
+                date_range = st.slider(
+                    "Période d'analyse",
+                    min_value=date_min,
+                    max_value=date_max,
+                    value=(date_min, date_max),
+                    format="YYYY-MM-DD"
+                )
+                
+                # Application des filtres
+                df_filtre = df_parcelles[
+                    (df_parcelles['date de debut'] >= date_range[0]) &
+                    (df_parcelles['date de fin'] <= date_range[1])
+                ]
+                
+                if commune_sel != "Toutes":
+                    df_filtre = df_filtre[df_filtre['commune'] == commune_sel]
+                
+                if lot_sel != "Tous" and 'lots' in df_filtre.columns:
+                    df_filtre = df_filtre[df_filtre['lots'] == lot_sel]
+                
+                if df_filtre.empty:
+                    st.warning("Aucune donnée disponible pour cette sélection.")
+                else:
+                    # Création d'une colonne pour les périodes (mois/année)
+                    df_filtre['periode'] = df_filtre['date de debut'].dt.to_period('M').astype(str)
+                    
+                    # Graphique d'évolution temporelle
+                    st.subheader("📈 Évolution des Levées dans le Temps")
+                    
+                    evolution = df_filtre.groupby('periode').size().reset_index(name='nombre')
+                    
+                    fig = px.line(
+                        evolution, 
+                        x='periode', 
+                        y='nombre',
+                        markers=True,
+                        title="Évolution du nombre de levées par période"
+                    )
+                    
+                    fig.update_layout(
+                        xaxis_title="Période",
+                        yaxis_title="Nombre de levées",
+                        height=500
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Si la colonne "levee" existe, afficher l'évolution par type de levée
+                    if 'levee' in df_filtre.columns:
+                        st.subheader("📊 Évolution par Type de Levée")
+                        
+                        levee_evolution = df_filtre.groupby(['periode', 'levee']).size().reset_index(name='nombre')
+                        
+                        fig_levee = px.line(
+                            levee_evolution,
+                            x='periode',
+                            y='nombre',
+                            color='levee',
+                            markers=True,
+                            title="Évolution du nombre de levées par type"
+                        )
+                        
+                        fig_levee.update_layout(
+                            xaxis_title="Période",
+                            yaxis_title="Nombre de levées",
+                            height=500
+                        )
+                        
+                        st.plotly_chart(fig_levee, use_container_width=True)
+                    
+                    # Afficher la table de données
+                    with st.expander("📋 Voir les données"):
+                        st.dataframe(df_filtre)
+    else:
+        st.error("Aucune donnée disponible pour l'analyse de l'évolution temporelle.")
+
+# Onglet 3: Post-traitement géométrique
+with tab3:
+    st.header("📊 Analyse du Post-traitement Géométrique")
+    
+    if not df_post_traitement.empty:
+        # Vérification des colonnes
+        expected_cols = ['geom', 'commune', 'total parcelle reçue', 'parcelle post traité (prête à être valider', 
+                        'nombre de parcelle dont la jointure est correcte', 'nombre de parcelle dont la jointure n\'a pas fonctionné',
+                        'nombre de parcelle individuelle', 'nombre de parcelle collective', 'lot']
+        
+        # Normalisation des noms de colonnes pour la vérification
+        normalized_cols = [col.lower().strip() for col in df_post_traitement.columns]
+        df_post_traitement.columns = normalized_cols
+        
+        # Adaptez les noms de colonnes normalisés pour correspondre à votre dataframe
+        missing_cols = []
+        for col in expected_cols:
+            if not any(expected_col.lower().strip() in norm_col for norm_col in normalized_cols):
+                missing_cols.append(col)
+        
+        if missing_cols:
+            st.warning(f"Attention: Les colonnes suivantes sont manquantes dans le fichier: {', '.join(missing_cols)}")
+            st.write("Colonnes disponibles:", df_post_traitement.columns.tolist())
+        
+        # Filtres
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if 'geom' in df_post_traitement.columns:
+                geom_options = df_post_traitement['geom'].dropna().unique()
+                geom_sel = st.selectbox("Filtrer par géométrie", ["Toutes"] + sorted(geom_options))
+            else:
+                geom_sel = "Toutes"
+        
+        with col2:
+            if 'commune' in df_post_traitement.columns:
+                commune_options = df_post_traitement['commune'].dropna().unique()
+                commune_sel = st.selectbox("Filtrer par commune", ["Toutes"] + sorted(commune_options), key='commune_tab3')
+            else:
+                commune_sel = "Toutes"
+        
+        # Application des filtres
+        df_filtre = df_post_traitement.copy()
+        
+        if geom_sel != "Toutes" and 'geom' in df_filtre.columns:
+            df_filtre = df_filtre[df_filtre['geom'] == geom_sel]
+        
+        if commune_sel != "Toutes" and 'commune' in df_filtre.columns:
+            df_filtre = df_filtre[df_filtre['commune'] == commune_sel]
+        
+        if df_filtre.empty:
+            st.warning("Aucune donnée disponible pour cette sélection.")
+        else:
+            # Création des graphiques
+            st.subheader("📊 Statistiques de Post-traitement")
+            
+            # Identifier les colonnes numériques pertinentes
+            num_cols = [
+                col for col in df_filtre.columns 
+                if ('parcelle' in col or 'total' in col or 'nombre' in col) and 
+                df_filtre[col].dtype in ['int64', 'float64']
+            ]
+            
+            if num_cols:
+                # Créer un dataframe agrégé pour l'affichage
+                if geom_sel == "Toutes" and 'geom' in df_filtre.columns:
+                    # Agrégation par géométrie
+                    df_agg = df_filtre.groupby('geom')[num_cols].sum().reset_index()
+                    category_col = 'geom'
+                elif commune_sel == "Toutes" and 'commune' in df_filtre.columns:
+                    # Agrégation par commune
+                    df_agg = df_filtre.groupby('commune')[num_cols].sum().reset_index()
+                    category_col = 'commune'
+                else:
+                    # Pas d'agrégation nécessaire
+                    df_agg = df_filtre
+                    category_col = 'index'
+                    df_agg[category_col] = "Sélection actuelle"
+                
+                # Graphique de comparaison
+                fig = go.Figure()
+                
+                for col in num_cols:
+                    fig.add_trace(go.Bar(
+                        x=df_agg[category_col],
+                        y=df_agg[col],
+                        name=col.capitalize(),
+                    ))
+                
+                fig.update_layout(
+                    title=f"Comparaison des parcelles par {category_col}",
+                    xaxis_tickangle=-45,
+                    xaxis_title=category_col.capitalize(),
+                    yaxis_title="Nombre de parcelles",
+                    barmode='group',
+                    height=600
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Graphique circulaire de la répartition
+                st.subheader("🍩 Répartition des Types de Parcelles")
+                
+                # Sélectionner les colonnes de répartition (par exemple, individuelle vs collective)
+                pie_cols = [col for col in num_cols if 'individuelle' in col or 'collective' in col]
+                
+                if pie_cols:
+                    pie_data = pd.DataFrame({
+                        'Type': [col.replace('nombre de parcelle ', '').capitalize() for col in pie_cols],
+                        'Valeur': [df_filtre[col].sum() for col in pie_cols]
+                    })
+                    
+                    fig_pie = px.pie(
+                        pie_data,
+                        values='Valeur',
+                        names='Type',
+                        title="Répartition par type de parcelle"
+                    )
+                    
+                    fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+                    
+                    st.plotly_chart(fig_pie, use_container_width=True)
+                
+                # Graphique de comparaison entre parcelles reçues et post-traitées
+                st.subheader("📈 Parcelles Reçues vs Post-traitées")
+                
+                comparison_cols = [
+                    col for col in num_cols 
+                    if 'total parcelle reçue' in col or 'parcelle post traité' in col
+                ]
+                
+                if len(comparison_cols) >= 2:
+                    if 'lot' in df_filtre.columns:
+                        # Par lot
+                        df_lot = df_filtre.groupby('lot')[comparison_cols].sum().reset_index()
+                        
+                        fig_comp = go.Figure()
+                        
+                        for col in comparison_cols:
+                            fig_comp.add_trace(go.Bar(
+                                x=df_lot['lot'],
+                                y=df_lot[col],
+                                name=col.capitalize()
+                            ))
+                        
+                        fig_comp.update_layout(
+                            title="Comparaison par lot",
+                            xaxis_title="Lot",
+                            yaxis_title="Nombre de parcelles",
+                            barmode='group',
+                            height=500
+                        )
+                        
+                        st.plotly_chart(fig_comp, use_container_width=True)
+                    
+                    # Efficacité du traitement
+                    if 'total parcelle reçue' in df_filtre.columns and 'parcelle post traité (prête à être valider' in df_filtre.columns:
+                        st.subheader("⚙️ Efficacité du Post-traitement")
+                        
+                        # Calculer le taux de traitement
+                        df_filtre['taux_traitement'] = (df_filtre['parcelle post traité (prête à être valider'] / 
+                                                     df_filtre['total parcelle reçue'] * 100)
+                        
+                        # Agrégation par commune ou géométrie
+                        if 'commune' in df_filtre.columns:
+                            agg_col = 'commune'
+                        elif 'geom' in df_filtre.columns:
+                            agg_col = 'geom'
+                        else:
+                            agg_col = None
+                        
+                        if agg_col:
+                            df_eff = df_filtre.groupby(agg_col).agg({
+                                'total parcelle reçue': 'sum',
+                                'parcelle post traité (prête à être valider': 'sum'
+                            }).reset_index()
+                            
+                            df_eff['taux_traitement'] = (df_eff['parcelle post traité (prête à être valider'] / 
+                                                        df_eff['total parcelle reçue'] * 100)
+                            
+                            fig_eff = px.bar(
+                                df_eff,
+                                x=agg_col,
+                                y='taux_traitement',
+                                text_auto='.1f',
+                                title=f"Taux de traitement par {agg_col} (%)"
+                            )
+                            
+                            fig_eff.update_traces(texttemplate='%{text}%', textposition='outside')
+                            fig_eff.update_layout(
+                                xaxis_title=agg_col.capitalize(),
+                                yaxis_title="Taux de traitement (%)",
+                                height=500
+                            )
+                            
+                            st.plotly_chart(fig_eff, use_container_width=True)
+            
+            # Afficher la table de données
+            with st.expander("📋 Voir les données"):
+                st.dataframe(df_filtre)
+                
+                # Option de téléchargement
+                csv = df_filtre.to_csv(index=False)
+                st.download_button(
+                    label="Télécharger les données filtrées (CSV)",
+                    data=csv,
+                    file_name="parcelles_post_traitees_filtrees.csv",
+                    mime="text/csv",
+                )
+    else:
+        st.error("Aucune donnée disponible pour l'analyse du post-traitement géométrique.")
