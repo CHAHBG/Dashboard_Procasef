@@ -36,21 +36,33 @@ def charger_parcelles():
     
     return df
 
+import pandas as pd
+import streamlit as st
+
 @st.cache_data
 def charger_levee_par_commune():
-    df = pd.read_excel("data/Levee par commune Terrain_URM.xlsx", engine="openpyxl")
-    df.fillna("", inplace=True)
-    return df
-
+    """Charge les données des levées par commune depuis le fichier Excel"""
+    try:
+        df = pd.read_excel("data/Levee par commune Terrain_URM.xlsx", engine="openpyxl")
+        df.columns = df.columns.str.strip().str.lower()
+        return df
+    except Exception as e:
+        st.error(f"Erreur lors du chargement de levée_par_commune.xlsx : {e}")
+        return pd.DataFrame()
 
 @st.cache_data
 def charger_parcelles_terrain_periode():
-    df = pd.read_excel("data/Parcelles_terrain_periode.xlsx", engine="openpyxl")
-    df.columns = df.columns.str.lower()
-    df["superficie"] = pd.to_numeric(df["superficie"], errors="coerce")
-    df["commune"] = df["commune"].fillna("Non spécifié").replace("", "Non spécifié")
-    df["periode"] = df["periode"].fillna("Non spécifié").replace("", "Non spécifié")
-    return df
+    """Charge les données des parcelles terrain et leur période de levée"""
+    try:
+        df = pd.read_excel("data/Parcelles_terrain_periode.xlsx", engine="openpyxl")
+        df.columns = df.columns.str.strip().str.lower()
+        df['date de debut'] = pd.to_datetime(df['date de debut'], errors='coerce')
+        df['date de fin'] = pd.to_datetime(df['date de fin'], errors='coerce')
+        return df
+    except Exception as e:
+        st.error(f"Erreur lors du chargement de levée_parcelles_par_periode.xlsx : {e}")
+        return pd.DataFrame()
+
 
 
 @st.cache_data
