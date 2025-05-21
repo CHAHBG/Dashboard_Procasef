@@ -8,6 +8,7 @@ import progression
 from projections_2025 import afficher_projections_2025
 import genre_dashboard
 import post_traitement
+import analyse_parcelles  # Importer le nouveau module
 
 # Configuration de la page
 st.set_page_config(
@@ -50,6 +51,9 @@ def charger_parcelles_terrain_periode():
         df = pd.read_excel("data/Parcelles_terrain_periode.xlsx", engine="openpyxl")
         df.fillna("", inplace=True)
         df.columns = df.columns.str.lower()
+        for col in ['date de debut', 'date de fin']:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors='coerce')
         return df
     except Exception as e:
         st.error(f"Erreur lors du chargement du fichier des parcelles par période: {e}")
@@ -109,9 +113,10 @@ def main():
                 "État d'avancement",
                 "Projections 2025",
                 "Répartition du genre",
+                "Analyse des parcelles",  # Nouvel onglet ajouté
                 "Post-traitement"
             ],
-            icons=["map", "bar-chart-line", "calendar", "gender-female", "gear"],
+            icons=["map", "bar-chart-line", "calendar", "gender-female", "search", "gear"],  # Icône ajoutée
             menu_icon="cast",
             default_index=0,
             styles={
@@ -146,6 +151,9 @@ def main():
 
     elif selected == "Répartition du genre":
         genre_dashboard.afficher_repartition_genre()
+        
+    elif selected == "Analyse des parcelles":  # Nouvel onglet
+        analyse_parcelles.afficher_analyse_parcelles()
 
     elif selected == "Post-traitement":
         df_post = charger_post_traitement()
