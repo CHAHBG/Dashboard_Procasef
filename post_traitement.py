@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import numpy as np
+from datetime import datetime
 
 @st.cache_data
 def charger_levee_par_commune():
@@ -27,18 +29,37 @@ def charger_parcelles_terrain_periode():
         st.error(f"Erreur fichier parcelles période : {e}")
         return pd.DataFrame()
 
-def afficher_post_traitement(df_post_traitement):
+@st.cache_data
+def charger_parcelles_post_traitement():
+    """Charge les données des parcelles post-traitées par géométrie"""
+    try:
+        df = pd.read_excel("data/Parcelles post traites par geom.xlsx", engine="openpyxl")
+        df.columns = df.columns.str.strip().str.lower()
+        
+        # Conversion de dates si nécessaire
+        date_columns = [col for col in df.columns if 'date' in col.lower()]
+        for col in date_columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce')
+            
+        return df
+    except Exception as e:
+        st.error(f"Erreur fichier parcelles post-traitées : {e}")
+        return pd.DataFrame()
+
+def afficher_post_traitement(df_post_traitement=None):
     st.subheader("⚙️ Module de Post-traitement")
 
     df_levee = charger_levee_par_commune()
     df_parcelles = charger_parcelles_terrain_periode()
+    df_post_traitement = charger_parcelles_post_traitement()
 
-    tab1, tab2 = st.tabs(["🏘️ Communes & Régions", "📆 Par périodes"])
+    # Création de 3 onglets pour le module
+    tab1, tab2, tab3 = st.tabs(["🏘️ Communes & Régions", "📆 Par périodes", "📊 Post-traitement géométrique"])
 
     with tab1:
         st.markdown("### 📊 Comparaison des Parcelles Terrain vs URM")
         communes = df_levee['commune'].unique()
-        commune_sel = st.selectbox("Filtrer par commune", ["Toutes"] + list(communes))
+        commune_sel = st.selectbox("Filtrer par commune", ["Toutes"] + list(communes), key='commune_tab1')
 
         df_filtre = df_levee if commune_sel == "Toutes" else df_levee[df_levee['commune'] == commune_sel]
 
@@ -72,7 +93,7 @@ def afficher_post_traitement(df_post_traitement):
             return
 
         commune_options = df_parcelles['commune'].dropna().unique()
-        commune_sel = st.selectbox("Choisir une commune", ["Toutes"] + sorted(commune_options))
+        commune_sel = st.selectbox("Choisir une commune", ["Toutes"] + sorted(commune_options), key='commune_tab2')
 
         # Conversion explicite des dates
         date_min = df_parcelles['date de debut'].min()
@@ -125,3 +146,174 @@ def afficher_post_traitement(df_post_traitement):
 
         with st.expander("📋 Voir les données filtrées"):
             st.dataframe(df_filtre)
+            
+    with tab3:
+        st.markdown("### 📊 Analyse post-traitement géométrique")
+        
+        if df_post_traitement.empty:
+            st.warning("Aucune donnée de post-traitement disponible.")
+            return
+            
+        # Afficher les statistiques de base sur les parcelles post-traitées
+        st.markdown("#### 📈 Statistiques générales")
+        
+        # Créer une colonne pour afficher les colonnes importantes et leurs statistiques
+        col1, col2 = st.columns(2)
+        
+        # Nombre total de parcelles post-traitées
+        with col1:
+            total_parcelles = len(df_post_traitement)
+            st.metric("Nombre total de parcelles", total_parcelles)
+            
+            # Vérifier si les colonnes de géométrie existent
+            if 'superficie' in df_post_traitement.columns:
+                superficie_moyenne = df_post_traitement['superficie'].mean()
+                st.metric("Superficie moyenne (m²)", f"{superficie_moyenne:.2f}")
+            
+        with col2:
+            # Vérifie si une colonne de statut existe (hypothèse basée sur le code existant)
+            if 'statut' in df_post_traitement.columns:
+                statut_counts = df_post_traitement['statut'].value_counts()
+                fig = px.pie(
+                    values=statut_counts.values,
+                    names=statut_counts.index,
+                    title="Répartition par statut"
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            elif 'etat' in df_post_traitement.columns:
+                statut_counts = df_post_traitement['etat'].value_counts()
+                fig = px.pie(
+                    values=statut_counts.values,
+                    names=statut_counts.index,
+                    title="Répartition par état"
+                )
+                st.plotly_chart(fig, use_container_width=True)
+        
+        # Filtres
+        st.markdown("#### 🔍 Filtres")
+        
+        # Créer des filtres en fonction des colonnes disponibles
+        col_filters = st.columns(3)
+        
+        filter_columns = []
+        # Chercher des colonnes pertinentes pour le filtrage
+        for col in df_post_traitement.columns:
+            if col in ['commune', 'region', 'departement', 'statut', 'etat', 'type', 'categorie']:
+                filter_columns.append(col)
+        
+        # Limiter à 3 colonnes au maximum pour éviter l'encombrement
+        filter_columns = filter_columns[:3]
+        
+        # Créer les filtres
+        selected_filters = {}
+        for i, col in enumerate(filter_columns):
+            with col_filters[i % 3]:
+                unique_values = ["Tous"] + sorted(df_post_traitement[col].dropna().unique().tolist())
+                selected_filters[col] = st.selectbox(f"Filtrer par {col}", unique_values, key=f'post_filter_{col}')
+        
+        # Appliquer les filtres
+        df_filtered = df_post_traitement.copy()
+        for col, value in selected_filters.items():
+            if value != "Tous":
+                df_filtered = df_filtered[df_filtered[col] == value]
+        
+        # Afficher les graphiques d'analyse
+        st.markdown("#### 📊 Visualisations")
+        
+        # Déterminer quelles visualisations afficher en fonction des données disponibles
+        chart_tabs = st.tabs(["Tendances temporelles", "Comparaisons", "Distribution"])
+        
+        with chart_tabs[0]:
+            # Graphique de tendance temporelle (si des dates sont disponibles)
+            date_cols = [col for col in df_filtered.columns if 'date' in col.lower()]
+            if date_cols:
+                selected_date_col = st.selectbox("Sélectionner une date", date_cols)
+                if not pd.isna(df_filtered[selected_date_col]).all():
+                    # Grouper par mois/année
+                    df_filtered['mois_annee'] = df_filtered[selected_date_col].dt.to_period('M').astype(str)
+                    evolution = df_filtered.groupby('mois_annee').size().reset_index(name='count')
+                    
+                    fig = px.line(evolution, x='mois_annee', y='count', markers=True,
+                                title=f"Évolution par {selected_date_col}")
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.warning(f"Pas de données valides pour la colonne '{selected_date_col}'")
+            else:
+                st.info("Aucune colonne de date disponible pour les tendances temporelles")
+        
+        with chart_tabs[1]:
+            # Graphiques de comparaison
+            comparison_cols = [col for col in filter_columns if len(df_filtered[col].unique()) > 1 and len(df_filtered[col].unique()) <= 10]
+            if comparison_cols:
+                selected_comp_col = st.selectbox("Comparer par", comparison_cols)
+                
+                # Déterminer une colonne numérique pour la comparaison
+                numeric_cols = [col for col in df_filtered.columns if df_filtered[col].dtype in ['int64', 'float64']]
+                if numeric_cols:
+                    selected_metric = st.selectbox("Métrique", ["Compte"] + numeric_cols)
+                    
+                    if selected_metric == "Compte":
+                        # Compter le nombre d'occurrences
+                        comp_data = df_filtered[selected_comp_col].value_counts().reset_index()
+                        comp_data.columns = [selected_comp_col, 'count']
+                        
+                        fig = px.bar(comp_data, x=selected_comp_col, y='count',
+                                    title=f"Comparaison par {selected_comp_col}")
+                    else:
+                        # Utiliser une métrique numérique (somme, moyenne, etc.)
+                        agg_method = st.radio("Méthode d'agrégation", ["Somme", "Moyenne", "Médiane", "Max", "Min"])
+                        
+                        if agg_method == "Somme":
+                            comp_data = df_filtered.groupby(selected_comp_col)[selected_metric].sum().reset_index()
+                        elif agg_method == "Moyenne":
+                            comp_data = df_filtered.groupby(selected_comp_col)[selected_metric].mean().reset_index()
+                        elif agg_method == "Médiane":
+                            comp_data = df_filtered.groupby(selected_comp_col)[selected_metric].median().reset_index()
+                        elif agg_method == "Max":
+                            comp_data = df_filtered.groupby(selected_comp_col)[selected_metric].max().reset_index()
+                        else:  # Min
+                            comp_data = df_filtered.groupby(selected_comp_col)[selected_metric].min().reset_index()
+                        
+                        fig = px.bar(comp_data, x=selected_comp_col, y=selected_metric,
+                                    title=f"{agg_method} de {selected_metric} par {selected_comp_col}")
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("Aucune colonne numérique disponible pour les comparaisons")
+            else:
+                st.info("Pas assez de catégories distinctes pour les comparaisons")
+        
+        with chart_tabs[2]:
+            # Distribution des valeurs numériques
+            numeric_cols = [col for col in df_filtered.columns if df_filtered[col].dtype in ['int64', 'float64']]
+            if numeric_cols:
+                selected_dist_col = st.selectbox("Visualiser la distribution de", numeric_cols)
+                
+                fig = px.histogram(df_filtered, x=selected_dist_col,
+                                title=f"Distribution de {selected_dist_col}")
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Ajouter des statistiques descriptives
+                stats = df_filtered[selected_dist_col].describe()
+                st.write("Statistiques descriptives:")
+                st.dataframe(stats)
+            else:
+                st.info("Aucune colonne numérique disponible pour l'analyse de distribution")
+        
+        # Afficher les données filtrées
+        with st.expander("📋 Voir les données filtrées"):
+            st.dataframe(df_filtered)
+            
+            # Option pour télécharger les données filtrées
+            csv = df_filtered.to_csv(index=False)
+            st.download_button(
+                label="Télécharger les données filtrées (CSV)",
+                data=csv,
+                file_name="parcelles_post_traitees_filtrees.csv",
+                mime="text/csv",
+            )
+
+# Pour tester la fonction indépendamment (à commenter lors de l'intégration)
+# if __name__ == "__main__":
+#     st.set_page_config(page_title="Test Module Post-traitement", layout="wide")
+#     afficher_post_traitement()
