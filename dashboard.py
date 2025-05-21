@@ -7,8 +7,7 @@ import repartParcelles
 import progression
 from projections_2025 import afficher_projections_2025
 import genre_dashboard
-import post_traitement
-import post_traitement  # Importer le nouveau module
+import post_traitement# Importer le nouveau module
 
 # Configuration de la page
 st.set_page_config(
