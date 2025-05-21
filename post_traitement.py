@@ -10,8 +10,8 @@ def afficher_analyse_parcelles():
     st.header("📊 Analyse des Parcelles et Levées")
     
     # Fonction chargement des données déjà définies dans dashboard.py, donc on les utilise directement
-    df_levee = charger_levee_par_commune()
-    df_parcelles = charger_parcelles_terrain_periode()
+    #df_levee = charger_levee_par_commune()
+    #df_parcelles = charger_parcelles_terrain_periode()
     
     # Chargement spécifique pour ce module
     @st.cache_data
