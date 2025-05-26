@@ -1,7 +1,12 @@
 import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
-
+# Configuration de la page
+st.set_page_config(
+    page_title="PROCASEF - Boundou",
+    page_icon="logo/BETPLUSAUDETAG.jpg",
+    layout="wide"
+)
 # Modules internes
 import repartParcelles
 import progression
@@ -9,12 +14,7 @@ from projections_2025 import afficher_projections_2025
 import genre_dashboard
 import post_traitement
 
-# Configuration de la page
-st.set_page_config(
-    page_title="PROCASEF - Boundou",
-    page_icon="logo/BETPLUSAUDETAG.jpg",
-    layout="wide"
-)
+
 
 # Cache des données
 @st.cache_data
