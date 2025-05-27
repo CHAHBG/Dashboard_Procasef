@@ -50,7 +50,7 @@ def afficher_projections_2025():
 
     dernier_mois = df["mois"].iloc[-1]
     objectif_total = df["objectif_total"].iloc[-1]
-    realises_total = 19360
+    realises_total = 23693
     progression_pct = (realises_total / objectif_total) * 100 if objectif_total else 0
 
     col1, col2 = st.columns(2)
@@ -60,7 +60,7 @@ def afficher_projections_2025():
     progress_bar = col2.empty()
     for percent in range(0, int(progression_pct) + 1, 2):
         progress_bar.progress(min(percent / 100, 1.0), text=f"{percent}% de l'objectif atteint")
-        time.sleep(0.02)
+        time.sleep(0.1)
 
     st.markdown("---")
 
