@@ -5,7 +5,7 @@ from streamlit_option_menu import option_menu
 # Configuration de la page - DOIT ÊTRE EN PREMIER
 st.set_page_config(
     page_title="PROCASEF - Boundou",
-    page_icon="logo/BETPLUSAUDETAG.gif",  # Icône de l'onglet
+    page_icon="logo/BETPLUAUDETAG.jpg",  # Icône de l'onglet
     layout="wide"
 )
 
@@ -41,7 +41,7 @@ def main():
         st.markdown(
             """
             <div style='text-align: center;'>
-                <img src='logo/logo_animé.gif' width='120'>
+                <img src='logo/BETPLUAUDETAG.gif' width='120'>
             </div>
             """,
             unsafe_allow_html=True
