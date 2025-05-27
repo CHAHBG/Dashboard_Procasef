@@ -288,7 +288,7 @@ def afficher_analyse_parcelles():
 
     # Onglet 3: Post-traitement géométrique
     with tab3:
-        st.subheader("📊 Analyse du Post-traitement Géométrique")
+        st.subheader("📊 Analyse du Post-traitement")
         
         if not df_post_traitement.empty:
             # Normalisation des noms de colonnes
@@ -302,7 +302,7 @@ def afficher_analyse_parcelles():
             with col1:
                 if 'geom' in df_post_traitement.columns:
                     geom_options = df_post_traitement['geom'].dropna().unique()
-                    geom_sel = st.selectbox("Filtrer par géométrie", ["Toutes"] + sorted(geom_options))
+                    geom_sel = st.selectbox("Filtrer par CSIG", ["Toutes"] + sorted(geom_options))
                 else:
                     geom_sel = "Toutes"
             
