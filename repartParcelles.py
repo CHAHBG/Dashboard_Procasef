@@ -245,26 +245,3 @@ def afficher_dashboard_parcelles(df_parcelles):
         st.dataframe(df_filtre_final[colonnes_affichees], use_container_width=True)
 
 
-# Exemple d'utilisation
-    
-    # Chargement des données (exemple)
-    # Remplacer cette partie par votre propre chargement de données
-    try:
-        df_parcelles = pd.read_csv("parcelles.csv")
-        # Conversion des colonnes si nécessaire
-        if "superficie" not in df_parcelles.columns:
-            df_parcelles["superficie"] = 0.0
-        else:
-            df_parcelles["superficie"] = pd.to_numeric(df_parcelles["superficie"], errors="coerce").fillna(0)
-        
-        if "nicad" not in df_parcelles.columns:
-            df_parcelles["nicad"] = "Sans NICAD"
-        
-        if "statut_deliberation" not in df_parcelles.columns:
-            df_parcelles["statut_deliberation"] = "Non délibérée"
-        
-        # Appel de la fonction principale
-        afficher_dashboard_parcelles(df_parcelles)
-    except Exception as e:
-        st.error(f"Erreur lors du chargement des données: {e}")
-        st.info("Veuillez charger un fichier CSV contenant les données des parcelles.")
