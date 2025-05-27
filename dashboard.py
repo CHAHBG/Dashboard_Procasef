@@ -5,7 +5,7 @@ from streamlit_option_menu import option_menu
 # Configuration de la page - DOIT ÊTRE EN PREMIER
 st.set_page_config(
     page_title="PROCASEF - Boundou",
-    page_icon="logo/BETPLUSAUDETAG.jpg",
+    page_icon="logo/BETPLUSAUDETAG.gif",  # Icône de l'onglet
     layout="wide"
 )
 
@@ -25,6 +25,7 @@ from data_loader import (
 def main():
     # --- SIDEBAR ---
     with st.sidebar:
+        # Personnalisation du fond de la sidebar (facultatif)
         st.markdown(
             """
             <style>
@@ -36,8 +37,17 @@ def main():
             unsafe_allow_html=True
         )
 
-        st.image("logo/BETPLUSAUDETAG.jpg", width=120)
+        # Insertion du logo animé (GIF)
+        st.markdown(
+            """
+            <div style='text-align: center;'>
+                <img src='logo/logo_animé.gif' width='120'>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
+        # Titre et description
         st.markdown(
             """
             <div style='text-align:center;'>
@@ -49,6 +59,7 @@ def main():
             unsafe_allow_html=True
         )
 
+        # Menu de navigation
         selected = option_menu(
             menu_title=None,
             options=[
@@ -77,7 +88,7 @@ def main():
             }
         )
 
-    # --- CONTENU ---
+    # --- CONTENU PRINCIPAL ---
     st.title("📊 Tableau de Bord PROCASEF - Boundou")
 
     if selected == "Répartition des parcelles":
@@ -93,7 +104,7 @@ def main():
 
     elif selected == "Répartition du genre":
         genre_dashboard.afficher_repartition_genre()
-        
+
     elif selected == "Post-traitement":
         post_traitement.afficher_analyse_parcelles()
 
