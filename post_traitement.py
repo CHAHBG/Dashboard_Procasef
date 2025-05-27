@@ -294,7 +294,7 @@ def afficher_analyse_parcelles():
             # Normalisation des noms de colonnes
             df_post_traitement.columns = df_post_traitement.columns.str.lower().str.strip()
             
-            st.write("Colonnes disponibles dans le fichier de post-traitement:", df_post_traitement.columns.tolist())
+            #st.write("Colonnes disponibles dans le fichier de post-traitement:", df_post_traitement.columns.tolist())
             
             # Filtres
             col1, col2 = st.columns(2)
