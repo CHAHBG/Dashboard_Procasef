@@ -54,7 +54,7 @@ def main():
             st.markdown(
                 f"""
                 <div style='text-align: center; margin-bottom: 20px;'>
-                    <img src='data:image/gif;base64,{gif_base64}' width='120' style='border-radius: 10px;'>
+                    <img src='data:image/gif;base64,{gif_base64}' width='200' style='border-radius: 10px; max-width: 100%;'>
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -64,7 +64,7 @@ def main():
             st.markdown(
                 """
                 <div style='text-align: center; margin-bottom: 20px;'>
-                    <div style='width: 120px; height: 120px; background-color: #f39c12; border-radius: 10px; 
+                    <div style='width: 200px; height: 120px; background-color: #f39c12; border-radius: 10px; 
                                 display: flex; align-items: center; justify-content: center; margin: 0 auto;'>
                         <span style='color: white; font-size: 24px; font-weight: bold;'>LOGO</span>
                     </div>
