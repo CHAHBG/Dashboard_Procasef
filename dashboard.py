@@ -48,7 +48,7 @@ def main():
         )
 
         # Insertion du GIF animé
-        gif_base64 = load_gif_as_base64("logo/BETPLUAUDETAG.gif")
+        gif_base64 = load_gif_as_base64("logo/BETPLUAUDETAG_SMALL.gif")
         
                 if gif_base64:
             st.markdown(
