@@ -3,30 +3,22 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
-from dashboard import charger_levee_par_commune
-from dashboard import charger_parcelles_terrain_periode
+
+# Import depuis le module data_loader pour éviter les imports circulaires
+from data_loader import (
+    charger_levee_par_commune,
+    charger_parcelles_terrain_periode,
+    charger_parcelles_post_traitement
+)
 
 def afficher_analyse_parcelles():
     """Module d'analyse des parcelles et levées pour le tableau de bord PROCASEF"""
     
     st.header("📊 Analyse des Parcelles et Levées")
     
-    # Fonction chargement des données déjà définies dans dashboard.py, donc on les utilise directement
+    # Chargement des données
     df_levee = charger_levee_par_commune()
     df_parcelles = charger_parcelles_terrain_periode()
-    
-    # Chargement spécifique pour ce module
-    @st.cache_data
-    def charger_parcelles_post_traitement():
-        """Charge les données des parcelles post-traitées par géométrie"""
-        try:
-            df = pd.read_excel("data/Parcelles post traites par geom.xlsx", engine="openpyxl")
-            df.columns = df.columns.str.strip().str.lower()
-            return df
-        except Exception as e:
-            st.error(f"Erreur fichier parcelles post-traitées : {e}")
-            return pd.DataFrame()
-    
     df_post_traitement = charger_parcelles_post_traitement()
     
     # Création de 3 onglets pour l'analyse
