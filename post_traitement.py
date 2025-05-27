@@ -32,7 +32,7 @@ def afficher_analyse_parcelles():
             # Normalisation des noms de colonnes
             df_levee.columns = df_levee.columns.str.lower().str.strip()
             
-            # Mapping des colonnes possibles
+            # Mapping des colonnes possibles - mise à jour avec les vraies colonnes
             column_mapping = {
                 'parcelles terrain': ['parcelles terrain', 'total parcelles terrain'],
                 'parcelles urm': ['parcelles delimitées et enquetées (fourni par l\'opérateur)(urm)', 
@@ -181,88 +181,106 @@ def afficher_analyse_parcelles():
                 
                 # Filtres temporels
                 if 'date de debut' in df_parcelles.columns and 'date de fin' in df_parcelles.columns:
-                    date_min = df_parcelles['date de debut'].min()
-                    date_max = df_parcelles['date de fin'].max()
-                    
-                    if pd.isna(date_min) or pd.isna(date_max):
-                        st.warning("Dates invalides ou manquantes dans les données.")
-                    else:
-                        date_min = pd.to_datetime(date_min).to_pydatetime()
-                        date_max = pd.to_datetime(date_max).to_pydatetime()
+                    # Conversion sécurisée des dates
+                    try:
+                        df_parcelles['date de debut'] = pd.to_datetime(df_parcelles['date de debut'], errors='coerce')
+                        df_parcelles['date de fin'] = pd.to_datetime(df_parcelles['date de fin'], errors='coerce')
                         
-                        date_range = st.slider(
-                            "Période d'analyse",
-                            min_value=date_min,
-                            max_value=date_max,
-                            value=(date_min, date_max),
-                            format="YYYY-MM-DD"
-                        )
+                        # Filtrer les lignes avec des dates valides
+                        df_valid_dates = df_parcelles.dropna(subset=['date de debut', 'date de fin'])
                         
-                        # Application des filtres
-                        df_filtre = df_parcelles[
-                            (df_parcelles['date de debut'] >= date_range[0]) &
-                            (df_parcelles['date de fin'] <= date_range[1])
-                        ]
-                        
-                        if commune_sel != "Toutes" and 'commune' in df_filtre.columns:
-                            df_filtre = df_filtre[df_filtre['commune'] == commune_sel]
-                        
-                        if lot_sel != "Tous" and 'lots' in df_filtre.columns:
-                            df_filtre = df_filtre[df_filtre['lots'] == lot_sel]
-                        
-                        if df_filtre.empty:
-                            st.warning("Aucune donnée disponible pour cette sélection.")
+                        if df_valid_dates.empty:
+                            st.warning("Aucune date valide trouvée dans les données.")
                         else:
-                            # Création d'une colonne pour les périodes (mois/année)
-                            df_filtre['periode'] = df_filtre['date de debut'].dt.to_period('M').astype(str)
+                            date_min = df_valid_dates['date de debut'].min()
+                            date_max = df_valid_dates['date de fin'].max()
                             
-                            # Graphique d'évolution temporelle
-                            st.subheader("📈 Évolution des Levées dans le Temps")
+                            # Conversion en datetime python pour le slider
+                            date_min = date_min.to_pydatetime()
+                            date_max = date_max.to_pydatetime()
                             
-                            evolution = df_filtre.groupby('periode').size().reset_index(name='nombre')
-                            
-                            fig = px.line(
-                                evolution, 
-                                x='periode', 
-                                y='nombre',
-                                markers=True,
-                                title="Évolution du nombre de levées par période"
+                            date_range = st.slider(
+                                "Période d'analyse",
+                                min_value=date_min,
+                                max_value=date_max,
+                                value=(date_min, date_max),
+                                format="YYYY-MM-DD"
                             )
                             
-                            fig.update_layout(
-                                xaxis_title="Période",
-                                yaxis_title="Nombre de levées",
-                                height=500
-                            )
+                            # Application des filtres
+                            df_filtre = df_valid_dates[
+                                (df_valid_dates['date de debut'] >= pd.Timestamp(date_range[0])) &
+                                (df_valid_dates['date de fin'] <= pd.Timestamp(date_range[1]))
+                            ]
                             
-                            st.plotly_chart(fig, use_container_width=True)
+                            if commune_sel != "Toutes" and 'commune' in df_filtre.columns:
+                                df_filtre = df_filtre[df_filtre['commune'] == commune_sel]
                             
-                            # Si la colonne "levee" existe, afficher l'évolution par type de levée
-                            if 'levee' in df_filtre.columns:
-                                st.subheader("📊 Évolution par Type de Levée")
-                                
-                                levee_evolution = df_filtre.groupby(['periode', 'levee']).size().reset_index(name='nombre')
-                                
-                                fig_levee = px.line(
-                                    levee_evolution,
-                                    x='periode',
-                                    y='nombre',
-                                    color='levee',
-                                    markers=True,
-                                    title="Évolution du nombre de levées par type"
-                                )
-                                
-                                fig_levee.update_layout(
-                                    xaxis_title="Période",
-                                    yaxis_title="Nombre de levées",
-                                    height=500
-                                )
-                                
-                                st.plotly_chart(fig_levee, use_container_width=True)
+                            if lot_sel != "Tous" and 'lots' in df_filtre.columns:
+                                df_filtre = df_filtre[df_filtre['lots'] == lot_sel]
                             
-                            # Afficher la table de données
-                            with st.expander("📋 Voir les données"):
-                                st.dataframe(df_filtre)
+                            if df_filtre.empty:
+                                st.warning("Aucune donnée disponible pour cette sélection.")
+                            else:
+                                # Création d'une colonne pour les périodes (mois/année)
+                                df_filtre['periode'] = df_filtre['date de debut'].dt.to_period('M').astype(str)
+                                
+                                # Graphique d'évolution temporelle
+                                st.subheader("📈 Évolution des Levées dans le Temps")
+                                
+                                evolution = df_filtre.groupby('periode').size().reset_index(name='nombre')
+                                
+                                if not evolution.empty:
+                                    fig = px.line(
+                                        evolution, 
+                                        x='periode', 
+                                        y='nombre',
+                                        markers=True,
+                                        title="Évolution du nombre de levées par période"
+                                    )
+                                    
+                                    fig.update_layout(
+                                        xaxis_title="Période",
+                                        yaxis_title="Nombre de levées",
+                                        height=500
+                                    )
+                                    
+                                    st.plotly_chart(fig, use_container_width=True)
+                                else:
+                                    st.warning("Aucune donnée d'évolution à afficher.")
+                                
+                                # Si la colonne "levee" existe, afficher l'évolution par type de levée
+                                if 'levee' in df_filtre.columns:
+                                    st.subheader("📊 Évolution par Type de Levée")
+                                    
+                                    levee_evolution = df_filtre.groupby(['periode', 'levee']).size().reset_index(name='nombre')
+                                    
+                                    if not levee_evolution.empty:
+                                        fig_levee = px.line(
+                                            levee_evolution,
+                                            x='periode',
+                                            y='nombre',
+                                            color='levee',
+                                            markers=True,
+                                            title="Évolution du nombre de levées par type"
+                                        )
+                                        
+                                        fig_levee.update_layout(
+                                            xaxis_title="Période",
+                                            yaxis_title="Nombre de levées",
+                                            height=500
+                                        )
+                                        
+                                        st.plotly_chart(fig_levee, use_container_width=True)
+                                    else:
+                                        st.warning("Aucune donnée d'évolution par type de levée à afficher.")
+                                
+                                # Afficher la table de données
+                                with st.expander("📋 Voir les données"):
+                                    st.dataframe(df_filtre)
+                    except Exception as e:
+                        st.error(f"Erreur lors du traitement des dates: {str(e)}")
+                        st.write("Veuillez vérifier le format des dates dans le fichier.")
                 else:
                     st.warning("Colonnes de dates nécessaires non trouvées.")
         else:
@@ -431,23 +449,28 @@ def afficher_analyse_parcelles():
                         st.subheader("⚙️ Efficacité du Post-traitement")
                         
                         # Calculer le taux de traitement
-                        df_filtre['taux_traitement'] = (df_filtre[processed_col] / df_filtre[received_col] * 100).fillna(0)
+                        df_filtre_calc = df_filtre.copy()
+                        df_filtre_calc['taux_traitement'] = (df_filtre_calc[processed_col] / df_filtre_calc[received_col] * 100).fillna(0)
                         
                         # Agrégation par commune ou géométrie
-                        if 'commune' in df_filtre.columns:
+                        if 'commune' in df_filtre_calc.columns:
                             agg_col = 'commune'
-                        elif 'geom' in df_filtre.columns:
+                        elif 'geom' in df_filtre_calc.columns:
                             agg_col = 'geom'
                         else:
                             agg_col = None
                         
                         if agg_col:
-                            df_eff = df_filtre.groupby(agg_col).agg({
+                            df_eff = df_filtre_calc.groupby(agg_col).agg({
                                 received_col: 'sum',
                                 processed_col: 'sum'
                             }).reset_index()
                             
-                            df_eff['taux_traitement'] = (df_eff[processed_col] / df_eff[received_col] * 100).fillna(0)
+                            # Éviter la division par zéro
+                            df_eff['taux_traitement'] = df_eff.apply(
+                                lambda row: (row[processed_col] / row[received_col] * 100) if row[received_col] > 0 else 0, 
+                                axis=1
+                            )
                             
                             fig_eff = px.bar(
                                 df_eff,
