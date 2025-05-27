@@ -4,150 +4,226 @@ import altair as alt
 import time
 import numpy as np
 
-# Styles CSS améliorés pour les animations de vagues
+# Styles CSS pour animations modernes d'avancement
 st.markdown("""
 <style>
-.wave-container {
+/* Barre de progression circulaire */
+.circular-progress {
     position: relative;
-    width: 100%;
+    width: 120px;
     height: 120px;
-    overflow: hidden;
-    border-radius: 15px;
-    margin-bottom: 20px;
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-    border: 2px solid #2196f3;
-    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.2);
-}
-
-.wave-fill {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: linear-gradient(45deg, #4fc3f7, #29b6f6, #03a9f4);
-    transition: height 1s ease-in-out;
-}
-
-.wave-surface {
-    position: absolute;
-    top: -2px;
-    left: 0;
-    width: 200%;
-    height: 8px;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(255,255,255,0.8), 
-        transparent, 
-        rgba(255,255,255,0.6), 
-        transparent
-    );
-    transform-origin: center;
-}
-
-.wave-animation {
-    animation: wave-movement 2s ease-in-out infinite;
-}
-
-.wave-stable {
-    animation: none !important;
-    background: linear-gradient(45deg, #4caf50, #66bb6a, #81c784) !important;
-}
-
-.wave-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #fff;
-    font-size: 18px;
-    font-weight: bold;
-    z-index: 10;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-}
-
-.progress-label {
-    position: absolute;
-    top: -25px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #1976d2;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-@keyframes wave-movement {
-    0%, 100% {
-        transform: translateX(-50%) scaleY(1);
-    }
-    25% {
-        transform: translateX(-45%) scaleY(0.8);
-    }
-    50% {
-        transform: translateX(-50%) scaleY(1.2);
-    }
-    75% {
-        transform: translateX(-55%) scaleY(0.9);
-    }
-}
-
-/* Animation alternative - Particules flottantes */
-.particle-container {
-    position: relative;
-    width: 100%;
-    height: 120px;
-    overflow: hidden;
-    border-radius: 15px;
-    margin-bottom: 20px;
-    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
-    border: 2px solid #9c27b0;
-}
-
-.particle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background: #9c27b0;
+    margin: 20px auto;
     border-radius: 50%;
-    animation: float 3s infinite ease-in-out;
+    background: conic-gradient(from 0deg, #4CAF50 0%, #4CAF50 var(--progress), #e0e0e0 var(--progress), #e0e0e0 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
+    animation: rotate 0.8s ease-in-out;
 }
 
-.particle:nth-child(2) { animation-delay: 0.5s; }
-.particle:nth-child(3) { animation-delay: 1s; }
-.particle:nth-child(4) { animation-delay: 1.5s; }
-.particle:nth-child(5) { animation-delay: 2s; }
-
-@keyframes float {
-    0%, 100% {
-        transform: translateY(100px) rotate(0deg);
-        opacity: 0;
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(-20px) rotate(360deg);
-        opacity: 0;
-    }
+.circular-progress::before {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
 }
 
-/* Animation pulsation pour les métriques */
-.metric-pulse {
-    animation: pulse 2s infinite;
+.progress-text {
+    position: absolute;
+    font-size: 16px;
+    font-weight: bold;
+    color: #2e7d32;
+    z-index: 2;
 }
 
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-        box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
-    }
-    50% {
-        transform: scale(1.05);
-        box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
-    }
-    100% {
-        transform: scale(1);
-        box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
-    }
+@keyframes rotate {
+    from { transform: rotate(-180deg); }
+    to { transform: rotate(0deg); }
+}
+
+/* Barre de progression horizontale animée */
+.progress-bar-container {
+    position: relative;
+    width: 100%;
+    height: 30px;
+    background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+    margin: 20px 0;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #66BB6A, #81C784);
+    border-radius: 15px;
+    position: relative;
+    transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: shimmer 2s infinite;
+}
+
+.progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 20px;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: slide 2s infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+@keyframes slide {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Indicateur de progression avec points */
+.dots-progress {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 20px;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.dot.active {
+    background: #4CAF50;
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { transform: scale(1.2); }
+    50% { transform: scale(1.4); }
+}
+
+/* Carte de métrique animée */
+.metric-card {
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    border: 1px solid #e9ecef;
+    border-radius: 15px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.1), transparent);
+    animation: sweep 3s infinite;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(76, 175, 80, 0.2);
+}
+
+@keyframes sweep {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.metric-value {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #2e7d32;
+    margin: 10px 0;
+    animation: count-up 1s ease-out;
+}
+
+@keyframes count-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.metric-label {
+    color: #666;
+    font-size: 1.1em;
+    margin-bottom: 15px;
+}
+
+/* Animation de chargement pour les données */
+.loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0, #e0e0e0, #f0f0f0);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 8px;
+    height: 20px;
+    margin: 10px 0;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Indicateur de statut avec icônes */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 10px 0;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.status-excellent {
+    background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+    color: #2e7d32;
+    border-left: 4px solid #4caf50;
+}
+
+.status-good {
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    color: #f57c00;
+    border-left: 4px solid #ff9800;
+}
+
+.status-warning {
+    background: linear-gradient(135deg, #ffebee, #ffcdd2);
+    color: #c62828;
+    border-left: 4px solid #f44336;
+}
+
+.icon {
+    font-size: 1.5em;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-5px); }
+    60% { transform: translateY(-3px); }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -159,53 +235,92 @@ def charger_projections():
     df.columns = df.columns.str.strip().str.lower()
     return df
 
-def wave_progress_animation(value, max_value, text, label=""):
-    """Crée une animation de vague où la hauteur représente le pourcentage"""
-    percentage = min(value / max_value * 100, 100) if max_value > 0 else 0
-    is_complete = percentage >= 100
+def create_circular_progress(percentage, text, label=""):
+    """Crée une barre de progression circulaire"""
+    progress_deg = min(percentage * 3.6, 360)  # Convertir en degrés
     
-    # Classes CSS conditionnelles
-    wave_class = "wave-stable" if is_complete else "wave-animation"
-    
-    wave_html = f"""
-    <div class="wave-container">
-        <div class="progress-label">{label}</div>
-        <div class="wave-fill {wave_class}" style="height: {percentage}%;">
-            <div class="wave-surface"></div>
+    html = f"""
+    <div style="text-align: center;">
+        <div style="color: #666; font-weight: 600; margin-bottom: 10px;">{label}</div>
+        <div class="circular-progress" style="--progress: {progress_deg}deg;">
+            <div class="progress-text">{text}</div>
         </div>
-        <div class="wave-text">{text}</div>
     </div>
     """
-    return wave_html
+    return html
 
-def particle_animation(value, max_value, text, label=""):
-    """Animation alternative avec des particules flottantes"""
-    percentage = min(value / max_value * 100, 100) if max_value > 0 else 0
-    particle_count = min(int(percentage / 20), 5)  # Maximum 5 particules
+def create_horizontal_progress(percentage, text, label=""):
+    """Crée une barre de progression horizontale"""
+    width = min(percentage, 100)
     
-    particles = ""
-    for i in range(particle_count):
-        left = 20 + (i * 15)  # Espacement des particules
-        particles += f'<div class="particle" style="left: {left}%; animation-delay: {i * 0.3}s;"></div>'
-    
-    particle_html = f"""
-    <div class="particle-container">
-        <div class="progress-label">{label}</div>
-        {particles}
-        <div class="wave-text">{text}</div>
+    html = f"""
+    <div style="text-align: center;">
+        <div style="color: #666; font-weight: 600; margin-bottom: 10px;">{label}</div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" style="width: {width}%;">
+            </div>
+        </div>
+        <div style="color: #2e7d32; font-weight: bold; font-size: 18px;">{text}</div>
     </div>
     """
-    return particle_html
+    return html
+
+def create_dots_progress(percentage, total_dots=10):
+    """Crée un indicateur de progression avec des points"""
+    active_dots = int((percentage / 100) * total_dots)
+    
+    dots_html = ""
+    for i in range(total_dots):
+        dot_class = "dot active" if i < active_dots else "dot"
+        dots_html += f'<div class="{dot_class}"></div>'
+    
+    html = f"""
+    <div class="dots-progress">
+        {dots_html}
+    </div>
+    <div style="text-align: center; color: #2e7d32; font-weight: bold;">
+        {percentage:.1f}% Complete
+    </div>
+    """
+    return html
+
+def create_metric_card(title, value, subtitle, percentage):
+    """Crée une carte métrique animée"""
+    
+    # Déterminer le statut
+    if percentage >= 90:
+        status_class = "status-excellent"
+        icon = "🎯"
+    elif percentage >= 70:
+        status_class = "status-good"
+        icon = "⚡"
+    else:
+        status_class = "status-warning"
+        icon = "⚠️"
+    
+    html = f"""
+    <div class="metric-card">
+        <div class="metric-label">{title}</div>
+        <div class="metric-value">{value}</div>
+        <div class="status-indicator {status_class}">
+            <span class="icon">{icon}</span>
+            <span>{subtitle}</span>
+        </div>
+    </div>
+    """
+    return html
 
 def afficher_projections_2025():
     st.header("📅 Projections des Inventaires - 2025")
     
-    # Choix du type d'animation
-    animation_type = st.selectbox(
-        "🎨 Choisir le type d'animation",
-        ["Vagues fluides", "Particules flottantes"],
-        index=0
-    )
+    # Choix du style d'animation
+    col_choice, col_empty = st.columns([1, 2])
+    with col_choice:
+        animation_style = st.selectbox(
+            "🎨 Style d'animation",
+            ["Cercles", "Barres horizontales", "Points", "Cartes métriques"],
+            index=0
+        )
     
     df = charger_projections()
     
@@ -245,36 +360,133 @@ def afficher_projections_2025():
     realises_total = 23693
     progression_pct = (realises_total / objectif_total) * 100 if objectif_total else 0
     
-    # Affichage en deux colonnes avec métrique pulsante
-    col1, col2 = st.columns(2)
+    # Calculs pour les métriques
+    mois_ecoules = len(df)
+    moyenne_mensuelle = realises_total / mois_ecoules if mois_ecoules > 0 else 0
+    objectif_mensuel_moyen = df["objectif_mensuel"].mean()
+    pourcentage_mensuel = (moyenne_mensuelle / objectif_mensuel_moyen * 100) if objectif_mensuel_moyen > 0 else 0
     
-    # Métrique avec effet pulsant si proche de l'objectif
-    metric_class = "metric-pulse" if progression_pct > 80 else ""
-    col1.markdown(f"""
-    <div class="{metric_class}" style="padding: 20px; border-radius: 10px; background: linear-gradient(135deg, #e8f5e8, #c8e6c9);">
-        <h3 style="color: #2e7d32; margin: 0;">📌 Levés réalisés</h3>
-        <h1 style="color: #1b5e20; margin: 5px 0;">{realises_total:,}</h1>
-        <p style="color: #388e3c; margin: 0; font-size: 18px;">↗️ {progression_pct:.1f}% de l'objectif</p>
-    </div>
-    """, unsafe_allow_html=True)
+    projection_annuelle = (realises_total / mois_ecoules) * 12 if mois_ecoules > 0 else 0
+    pct_projection = (projection_annuelle / objectif_total * 100) if objectif_total > 0 else 0
     
-    # Animation choisie dans la deuxième colonne
-    if animation_type == "Vagues fluides":
-        animation_html = wave_progress_animation(
-            realises_total, 
-            objectif_total, 
-            f"{progression_pct:.1f}%", 
-            "Progression globale"
-        )
+    # Affichage selon le style choisi
+    if animation_style == "Cartes métriques":
+        st.subheader("📊 Tableau de bord principal")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown(
+                create_metric_card(
+                    "🎯 Objectif Global",
+                    f"{realises_total:,}",
+                    f"{progression_pct:.1f}% atteint",
+                    progression_pct
+                ),
+                unsafe_allow_html=True
+            )
+        
+        with col2:
+            st.markdown(
+                create_metric_card(
+                    "📈 Moyenne Mensuelle",
+                    f"{moyenne_mensuelle:,.0f}",
+                    f"{pourcentage_mensuel:.1f}% de l'objectif",
+                    pourcentage_mensuel
+                ),
+                unsafe_allow_html=True
+            )
+        
+        with col3:
+            st.markdown(
+                create_metric_card(
+                    "🔮 Projection Annuelle",
+                    f"{projection_annuelle:,.0f}",
+                    f"{pct_projection:.1f}% projeté",
+                    pct_projection
+                ),
+                unsafe_allow_html=True
+            )
+    
     else:
-        animation_html = particle_animation(
-            realises_total, 
-            objectif_total, 
-            f"{progression_pct:.1f}%", 
-            "Progression globale"
-        )
-    
-    col2.markdown(animation_html, unsafe_allow_html=True)
+        st.subheader("🚀 État d'avancement")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        if animation_style == "Cercles":
+            with col1:
+                st.markdown(
+                    create_circular_progress(
+                        progression_pct, 
+                        f"{progression_pct:.1f}%", 
+                        "🎯 Objectif Global"
+                    ),
+                    unsafe_allow_html=True
+                )
+            
+            with col2:
+                st.markdown(
+                    create_circular_progress(
+                        pourcentage_mensuel, 
+                        f"{pourcentage_mensuel:.1f}%", 
+                        "📊 Moyenne Mensuelle"
+                    ),
+                    unsafe_allow_html=True
+                )
+            
+            with col3:
+                st.markdown(
+                    create_circular_progress(
+                        pct_projection, 
+                        f"{pct_projection:.1f}%", 
+                        "🔮 Projection"
+                    ),
+                    unsafe_allow_html=True
+                )
+        
+        elif animation_style == "Barres horizontales":
+            with col1:
+                st.markdown(
+                    create_horizontal_progress(
+                        progression_pct, 
+                        f"{progression_pct:.1f}%", 
+                        "🎯 Objectif Global"
+                    ),
+                    unsafe_allow_html=True
+                )
+            
+            with col2:
+                st.markdown(
+                    create_horizontal_progress(
+                        pourcentage_mensuel, 
+                        f"{pourcentage_mensuel:.1f}%", 
+                        "📊 Moyenne Mensuelle"
+                    ),
+                    unsafe_allow_html=True
+                )
+            
+            with col3:
+                st.markdown(
+                    create_horizontal_progress(
+                        pct_projection, 
+                        f"{pct_projection:.1f}%", 
+                        "🔮 Projection"
+                    ),
+                    unsafe_allow_html=True
+                )
+        
+        elif animation_style == "Points":
+            with col1:
+                st.markdown("**🎯 Objectif Global**")
+                st.markdown(create_dots_progress(progression_pct), unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown("**📊 Moyenne Mensuelle**")
+                st.markdown(create_dots_progress(pourcentage_mensuel), unsafe_allow_html=True)
+            
+            with col3:
+                st.markdown("**🔮 Projection**")
+                st.markdown(create_dots_progress(pct_projection), unsafe_allow_html=True)
     
     st.markdown("---")
     
@@ -330,83 +542,6 @@ def afficher_projections_2025():
     )
     
     st.altair_chart(area_chart + ligne_levés, use_container_width=True)
-    
-    # Section des animations multiples
-    st.markdown("---")
-    st.subheader("🌊 Tableau de bord de progression")
-    
-    wave_cols = st.columns(3)
-    
-    # Calculs pour les différentes métriques
-    mois_ecoules = len(df)
-    moyenne_mensuelle = realises_total / mois_ecoules if mois_ecoules > 0 else 0
-    objectif_mensuel_moyen = df["objectif_mensuel"].mean()
-    pourcentage_mensuel = (moyenne_mensuelle / objectif_mensuel_moyen * 100) if objectif_mensuel_moyen > 0 else 0
-    
-    projection_annuelle = (realises_total / mois_ecoules) * 12 if mois_ecoules > 0 else 0
-    pct_projection = (projection_annuelle / objectif_total * 100) if objectif_total > 0 else 0
-    
-    # Affichage avec le type d'animation choisi
-    if animation_type == "Vagues fluides":
-        wave_cols[0].markdown(
-            wave_progress_animation(
-                realises_total, 
-                objectif_total, 
-                f"{progression_pct:.1f}%",
-                "🎯 Objectif global"
-            ), 
-            unsafe_allow_html=True
-        )
-        
-        wave_cols[1].markdown(
-            wave_progress_animation(
-                moyenne_mensuelle, 
-                objectif_mensuel_moyen, 
-                f"{pourcentage_mensuel:.1f}%",
-                "📊 Moyenne mensuelle"
-            ), 
-            unsafe_allow_html=True
-        )
-        
-        wave_cols[2].markdown(
-            wave_progress_animation(
-                projection_annuelle, 
-                objectif_total, 
-                f"{pct_projection:.1f}%",
-                "🔮 Projection annuelle"
-            ), 
-            unsafe_allow_html=True
-        )
-    else:
-        wave_cols[0].markdown(
-            particle_animation(
-                realises_total, 
-                objectif_total, 
-                f"{progression_pct:.1f}%",
-                "🎯 Objectif global"
-            ), 
-            unsafe_allow_html=True
-        )
-        
-        wave_cols[1].markdown(
-            particle_animation(
-                moyenne_mensuelle, 
-                objectif_mensuel_moyen, 
-                f"{pourcentage_mensuel:.1f}%",
-                "📊 Moyenne mensuelle"
-            ), 
-            unsafe_allow_html=True
-        )
-        
-        wave_cols[2].markdown(
-            particle_animation(
-                projection_annuelle, 
-                objectif_total, 
-                f"{pct_projection:.1f}%",
-                "🔮 Projection annuelle"
-            ), 
-            unsafe_allow_html=True
-        )
     
     st.markdown("---")
     st.subheader("📋 Données complètes")
