@@ -337,7 +337,7 @@ def afficher_analyse_parcelles():
                             num_cols.append(col)
                 
                 if num_cols:
-                    st.write(f"Colonnes numériques trouvées: {num_cols}")
+                   # st.write(f"Colonnes numériques trouvées: {num_cols}")
                     
                     # Créer un dataframe agrégé pour l'affichage
                     if geom_sel == "Toutes" and 'geom' in df_filtre.columns:
