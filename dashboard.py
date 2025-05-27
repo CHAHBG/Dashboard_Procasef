@@ -17,12 +17,13 @@ from projections_2025 import afficher_projections_2025
 import genre_dashboard
 import post_traitement
 from data_loader import (
-    charger_parcelles, 
-    charger_levee_par_commune, 
-    charger_parcelles_terrain_periode, 
+    charger_parcelles,
+    charger_levee_par_commune,
+    charger_parcelles_terrain_periode,
     charger_etapes
 )
 
+# --- FONCTIONS UTILES ---
 def load_gif_as_base64(gif_path):
     """Charge un GIF et le convertit en base64 pour l'affichage dans Streamlit"""
     try:
@@ -32,10 +33,12 @@ def load_gif_as_base64(gif_path):
     except FileNotFoundError:
         return None
 
+
+# --- APPLICATION PRINCIPALE ---
 def main():
     # --- SIDEBAR ---
     with st.sidebar:
-        # Personnalisation du fond de la sidebar (facultatif)
+        # Personnalisation du fond de la sidebar
         st.markdown(
             """
             <style>
@@ -47,22 +50,20 @@ def main():
             unsafe_allow_html=True
         )
 
-        # Insertion du GIF animé
+        # Insertion du GIF animé ou fallback
         gif_base64 = load_gif_as_base64("logo/BETPLUAUDETAG_SMALL.gif")
-        
-                if gif_base64:
+
+        if gif_base64:
             st.markdown(
                 f"""
                 <div style='display: flex; justify-content: center; margin: 0 auto; padding: 0;'>
                     <img src='data:image/gif;base64,{gif_base64}' 
                          style='width: 100px; height: auto; border-radius: 8px; display: block; margin: 0; padding: 0; box-shadow: none; background: transparent;'>
                 </div>
-
                 """,
                 unsafe_allow_html=True
             )
         else:
-            # Fallback si le GIF n'est pas trouvé
             st.markdown(
                 """
                 <div style='text-align: center; margin-bottom: 20px;'>
@@ -136,5 +137,7 @@ def main():
     elif selected == "Post-traitement":
         post_traitement.afficher_analyse_parcelles()
 
+
+# --- POINT D'ENTRÉE ---
 if __name__ == "__main__":
     main()
