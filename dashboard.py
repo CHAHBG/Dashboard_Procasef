@@ -1,76 +1,26 @@
 import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
-# Configuration de la page
+
+# Configuration de la page - DOIT ÊTRE EN PREMIER
 st.set_page_config(
     page_title="PROCASEF - Boundou",
     page_icon="logo/BETPLUSAUDETAG.jpg",
     layout="wide"
 )
-# Modules internes
+
+# Imports des modules internes
 import repartParcelles
 import progression
 from projections_2025 import afficher_projections_2025
 import genre_dashboard
 import post_traitement
-
-
-
-# Cache des données
-@st.cache_data
-def charger_parcelles():
-    df = pd.read_excel("data/parcelles.xlsx", engine="openpyxl")
-    df.columns = df.columns.str.lower()
-    df["nicad"] = df["nicad"].astype(str).str.strip().str.lower() == "oui"
-    df["nicad"] = df["nicad"].map({True: "Avec NICAD", False: "Sans NICAD"})
-    
-    if "deliberee" in df.columns:
-        df["deliberee"] = df["deliberee"].astype(str).str.strip().str.lower() == "oui"
-        df["statut_deliberation"] = df["deliberee"].map({True: "Délibérée", False: "Non délibérée"})
-    else:
-        df["statut_deliberation"] = "Non délibérée"
-    
-    df["superficie"] = pd.to_numeric(df["superficie"], errors="coerce")
-    df["village"] = df["village"].fillna("Non spécifié").replace("", "Non spécifié")
-    df["commune"] = df["commune"].fillna("Non spécifié").replace("", "Non spécifié")
-    
-    return df
-
-import pandas as pd
-import streamlit as st
-
-@st.cache_data
-def charger_levee_par_commune():
-    """Charge les données des levées par commune depuis le fichier Excel"""
-    try:
-        df = pd.read_excel("data/Levee par commune Terrain_URM.xlsx", engine="openpyxl")
-        df.columns = df.columns.str.strip().str.lower()
-        return df
-    except Exception as e:
-        st.error(f"Erreur lors du chargement de levée_par_commune.xlsx : {e}")
-        return pd.DataFrame()
-
-@st.cache_data
-def charger_parcelles_terrain_periode():
-    """Charge les données des parcelles terrain et leur période de levée"""
-    try:
-        df = pd.read_excel("data/Parcelles_terrain_periode.xlsx", engine="openpyxl")
-        df.columns = df.columns.str.strip().str.lower()
-        df['date de debut'] = pd.to_datetime(df['date de debut'], errors='coerce')
-        df['date de fin'] = pd.to_datetime(df['date de fin'], errors='coerce')
-        return df
-    except Exception as e:
-        st.error(f"Erreur lors du chargement de levée_parcelles_par_periode.xlsx : {e}")
-        return pd.DataFrame()
-
-
-
-@st.cache_data
-def charger_etapes():
-    df = pd.read_excel("data/Etat des opérations Boundou-Mai 2025.xlsx", engine="openpyxl")
-    df.fillna("", inplace=True)
-    return df
-
+from data_loader import (
+    charger_parcelles, 
+    charger_levee_par_commune, 
+    charger_parcelles_terrain_periode, 
+    charger_etapes
+)
 
 def main():
     # --- SIDEBAR ---
@@ -106,7 +56,7 @@ def main():
                 "État d'avancement",
                 "Projections 2025",
                 "Répartition du genre",
-                "Analyse des parcelles",  # ✔️ Conservé
+                "Analyse des parcelles",
                 "Post-traitement"
             ],
             icons=["map", "bar-chart-line", "calendar", "gender-female", "search", "gear"],
@@ -145,11 +95,11 @@ def main():
     elif selected == "Répartition du genre":
         genre_dashboard.afficher_repartition_genre()
         
-    elif selected == "Analyse des parcelles":  # ✔️ Utilise maintenant post_traitement
+    elif selected == "Analyse des parcelles":
         post_traitement.afficher_analyse_parcelles()
 
     elif selected == "Post-traitement":
-        post_traitement.afficher_analyse_parcelles()  # Ou une autre fonction si différente
+        post_traitement.afficher_analyse_parcelles()
 
 if __name__ == "__main__":
     main()
