@@ -6,7 +6,7 @@ import base64
 # Configuration de la page - DOIT ÊTRE EN PREMIER
 st.set_page_config(
     page_title="PROCASEF - Boundou",
-    page_icon="logo/BETPLUAUDETAG.jpg",  # Icône de l'onglet
+    page_icon="logo/BETPLUAUDETAG.png",  # Icône de l'onglet
     layout="wide"
 )
 
@@ -54,7 +54,7 @@ def main():
             st.markdown(
                 f"""
                 <div style='text-align: center; margin-bottom: 20px;'>
-                    <img src='data:image/gif;base64,{gif_base64}' width='200' style='border-radius: 10px; max-width: 100%;'>
+                    <img src='data:image/gif;base64,{gif_base64}' width='400' style='border-radius: 10px; max-width: 100%;'>
                 </div>
                 """,
                 unsafe_allow_html=True
