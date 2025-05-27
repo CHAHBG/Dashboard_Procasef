@@ -53,10 +53,11 @@ def main():
                 if gif_base64:
             st.markdown(
                 f"""
-                <div style='text-align: center; margin-bottom: 20px;'>
-                    <img src='data:image/gif;base64,{gif_base64}' width='120' 
-                         style='border-radius: 10px; max-width: 100%; height: auto;'>
+                <div style='display: flex; justify-content: center; margin: 0 auto; padding: 0;'>
+                    <img src='data:image/gif;base64,{gif_base64}' 
+                         style='width: 100px; height: auto; border-radius: 8px; display: block; margin: 0; padding: 0; box-shadow: none; background: transparent;'>
                 </div>
+
                 """,
                 unsafe_allow_html=True
             )
