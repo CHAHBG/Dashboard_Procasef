@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
+import base64
 
 # Configuration de la page - DOIT ÊTRE EN PREMIER
 st.set_page_config(
@@ -22,6 +23,15 @@ from data_loader import (
     charger_etapes
 )
 
+def load_gif_as_base64(gif_path):
+    """Charge un GIF et le convertit en base64 pour l'affichage dans Streamlit"""
+    try:
+        with open(gif_path, "rb") as f:
+            contents = f.read()
+        return base64.b64encode(contents).decode("utf-8")
+    except FileNotFoundError:
+        return None
+
 def main():
     # --- SIDEBAR ---
     with st.sidebar:
@@ -37,15 +47,31 @@ def main():
             unsafe_allow_html=True
         )
 
-        # Insertion du logo animé (GIF)
-        st.markdown(
-            """
-            <div style='text-align: center;'>
-                <img src='logo/BETPLUAUDETAG.gif' width='120'>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        # Insertion du GIF animé
+        gif_base64 = load_gif_as_base64("logo/BETPLUAUDETAG.gif")
+        
+        if gif_base64:
+            st.markdown(
+                f"""
+                <div style='text-align: center; margin-bottom: 20px;'>
+                    <img src='data:image/gif;base64,{gif_base64}' width='120' style='border-radius: 10px;'>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        else:
+            # Fallback si le GIF n'est pas trouvé
+            st.markdown(
+                """
+                <div style='text-align: center; margin-bottom: 20px;'>
+                    <div style='width: 120px; height: 120px; background-color: #f39c12; border-radius: 10px; 
+                                display: flex; align-items: center; justify-content: center; margin: 0 auto;'>
+                        <span style='color: white; font-size: 24px; font-weight: bold;'>LOGO</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         # Titre et description
         st.markdown(
