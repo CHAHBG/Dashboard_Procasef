@@ -56,7 +56,6 @@ def main():
                 "État d'avancement",
                 "Projections 2025",
                 "Répartition du genre",
-                "Analyse des parcelles",
                 "Post-traitement"
             ],
             icons=["map", "bar-chart-line", "calendar", "gender-female", "search", "gear"],
@@ -95,9 +94,6 @@ def main():
     elif selected == "Répartition du genre":
         genre_dashboard.afficher_repartition_genre()
         
-    elif selected == "Analyse des parcelles":
-        post_traitement.afficher_analyse_parcelles()
-
     elif selected == "Post-traitement":
         post_traitement.afficher_analyse_parcelles()
 
