@@ -491,33 +491,34 @@ def afficher_projections_2025():
     st.markdown("---")
     
     # Graphiques existants
-    st.subheader("📊 Suivi mensuel : Objectifs vs Réalisés")
-    
-    df_realises = df[["mois", "realises"]].copy()
-    df_realises["Type"] = "Réalisés"
-    df_realises = df_realises.rename(columns={"realises": "Nombre"})
-    
-    df_objectifs = df[["mois", "objectif_mensuel"]].copy()
-    df_objectifs["Type"] = "Objectif mensuel"
-    df_objectifs = df_objectifs.rename(columns={"objectif_mensuel": "Nombre"})
-    
-    chart_data = pd.concat([df_realises, df_objectifs])
-    
-    bar_chart = alt.Chart(chart_data).mark_bar().encode(
-        x=alt.X("mois:N", title="Mois", sort=list(df["mois"])),
-        y=alt.Y("Nombre:Q", title="Nombre d'inventaires"),
-        color=alt.Color(
-            "Type:N", 
-            title="",
-            scale=alt.Scale(
-                domain=["Réalisés", "Objectif mensuel"],
-                range=["seagreen", "lightgray"]
-            )
-        ),
-        tooltip=["mois:N", "Type:N", "Nombre:Q"]
-    ).properties(height=400)
-    
-    st.altair_chart(bar_chart, use_container_width=True)
+st.subheader("📊 Suivi mensuel : Objectifs vs Réalisés")
+
+df_realises = df[["mois", "realises"]].copy()
+df_realises["Type"] = "Réalisés"
+df_realises = df_realises.rename(columns={"realises": "Nombre"})
+
+# CORRECTION: Objectif mensuel fixe à 8000 au lieu d'utiliser la colonne variable
+df_objectifs = df[["mois"]].copy()
+df_objectifs["Nombre"] = 8000  # Valeur fixe de 8000 pour chaque mois
+df_objectifs["Type"] = "Objectif mensuel"
+
+chart_data = pd.concat([df_realises, df_objectifs])
+
+bar_chart = alt.Chart(chart_data).mark_bar().encode(
+    x=alt.X("mois:N", title="Mois", sort=list(df["mois"])),
+    y=alt.Y("Nombre:Q", title="Nombre d'inventaires"),
+    color=alt.Color(
+        "Type:N", 
+        title="",
+        scale=alt.Scale(
+            domain=["Réalisés", "Objectif mensuel"],
+            range=["seagreen", "lightgray"]
+        )
+    ),
+    tooltip=["mois:N", "Type:N", "Nombre:Q"]
+).properties(height=400)
+
+st.altair_chart(bar_chart, use_container_width=True)
     
     st.markdown("---")
     st.subheader("📈 Évolution de l'objectif cumulé")
