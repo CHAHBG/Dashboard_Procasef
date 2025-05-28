@@ -225,55 +225,106 @@ def afficher_analyse_parcelles():
                                 # Création d'une colonne pour les périodes (mois/année)
                                 df_filtre['periode'] = df_filtre['date de debut'].dt.to_period('M').astype(str)
                                 
-                                # Graphique d'évolution temporelle
-                                st.subheader("📈 Évolution des Levées dans le Temps")
+                                # Graphique d'évolution temporelle - CORRIGÉ
+                                st.subheader("📈 Évolution de la Quantité de Levées dans le Temps")
                                 
-                                evolution = df_filtre.groupby('periode').size().reset_index(name='nombre')
+                                # Chercher une colonne de quantité ou superficie
+                                quantity_cols = []
+                                for col in df_filtre.columns:
+                                    if any(keyword in col.lower() for keyword in ['superficie', 'surface', 'quantite', 'total', 'parcelle']):
+                                        if df_filtre[col].dtype in ['int64', 'float64', 'Int64', 'Float64']:
+                                            quantity_cols.append(col)
                                 
-                                if not evolution.empty:
+                                if quantity_cols:
+                                    # Utiliser la première colonne de quantité trouvée
+                                    quantity_col = quantity_cols[0]
+                                    evolution = df_filtre.groupby('periode')[quantity_col].sum().reset_index()
+                                    evolution.rename(columns={quantity_col: 'quantite_totale'}, inplace=True)
+                                    
                                     fig = px.line(
                                         evolution, 
                                         x='periode', 
-                                        y='nombre',
+                                        y='quantite_totale',
                                         markers=True,
-                                        title="Évolution du nombre de levées par période"
+                                        title=f"Évolution de la quantité totale de levées par période ({quantity_col})"
                                     )
                                     
                                     fig.update_layout(
-                                        xaxis_title="Période",
-                                        yaxis_title="Nombre de levées",
+                                        xaxis_title="Période (Mois-Année)",
+                                        yaxis_title=f"Quantité totale ({quantity_col})",
                                         height=500
                                     )
                                     
                                     st.plotly_chart(fig, use_container_width=True)
                                 else:
-                                    st.warning("Aucune donnée d'évolution à afficher.")
+                                    # Fallback: utiliser le nombre de lignes mais avec un titre plus clair
+                                    evolution = df_filtre.groupby('periode').size().reset_index(name='nombre_operations')
+                                    
+                                    fig = px.line(
+                                        evolution, 
+                                        x='periode', 
+                                        y='nombre_operations',
+                                        markers=True,
+                                        title="Évolution du nombre d'opérations de levées par période"
+                                    )
+                                    
+                                    fig.update_layout(
+                                        xaxis_title="Période (Mois-Année)",
+                                        yaxis_title="Nombre d'opérations de levées",
+                                        height=500
+                                    )
+                                    
+                                    st.plotly_chart(fig, use_container_width=True)
                                 
-                                # Si la colonne "levee" existe, afficher l'évolution par type de levée
+                                # Évolution par type de levée - CORRIGÉ
                                 if 'levee' in df_filtre.columns:
                                     st.subheader("📊 Évolution par Type de Levée")
                                     
-                                    levee_evolution = df_filtre.groupby(['periode', 'levee']).size().reset_index(name='nombre')
-                                    
-                                    if not levee_evolution.empty:
+                                    if quantity_cols:
+                                        # Utiliser la quantité
+                                        levee_evolution = df_filtre.groupby(['periode', 'levee'])[quantity_col].sum().reset_index()
+                                        levee_evolution.rename(columns={quantity_col: 'quantite_totale'}, inplace=True)
+                                        
                                         fig_levee = px.line(
                                             levee_evolution,
                                             x='periode',
-                                            y='nombre',
+                                            y='quantite_totale',
                                             color='levee',
                                             markers=True,
-                                            title="Évolution du nombre de levées par type"
+                                            title=f"Évolution de la quantité de levées par type ({quantity_col})"
                                         )
                                         
                                         fig_levee.update_layout(
-                                            xaxis_title="Période",
-                                            yaxis_title="Nombre de levées",
-                                            height=500
+                                            xaxis_title="Période (Mois-Année)",
+                                            yaxis_title=f"Quantité totale ({quantity_col})",
+                                            height=500,
+                                            legend_title="Type de Levée"
+                                        )
+                                    else:
+                                        # Utiliser le nombre d'opérations
+                                        levee_evolution = df_filtre.groupby(['periode', 'levee']).size().reset_index(name='nombre_operations')
+                                        
+                                        fig_levee = px.line(
+                                            levee_evolution,
+                                            x='periode',
+                                            y='nombre_operations',
+                                            color='levee',
+                                            markers=True,
+                                            title="Évolution du nombre d'opérations par type de levée"
                                         )
                                         
-                                        st.plotly_chart(fig_levee, use_container_width=True)
-                                    else:
-                                        st.warning("Aucune donnée d'évolution par type de levée à afficher.")
+                                        fig_levee.update_layout(
+                                            xaxis_title="Période (Mois-Année)",
+                                            yaxis_title="Nombre d'opérations",
+                                            height=500,
+                                            legend_title="Type de Levée"
+                                        )
+                                    
+                                    # Améliorer la lisibilité
+                                    fig_levee.update_xaxes(tickangle=45)
+                                    fig_levee.update_traces(line=dict(width=3), marker=dict(size=8))
+                                    
+                                    st.plotly_chart(fig_levee, use_container_width=True)
                                 
                                 # Afficher la table de données
                                 with st.expander("📋 Voir les données"):
@@ -445,7 +496,7 @@ def afficher_analyse_parcelles():
                             
                             st.plotly_chart(fig_comp, use_container_width=True)
                         
-                        # Efficacité du traitement
+                        # Efficacité du traitement - CORRIGÉ
                         st.subheader("⚙️ Efficacité du Post-traitement")
                         
                         # Calculer le taux de traitement
@@ -472,20 +523,30 @@ def afficher_analyse_parcelles():
                                 axis=1
                             )
                             
-                            fig_eff = px.bar(
-                                df_eff,
-                                x=agg_col,
-                                y='taux_traitement',
-                                text_auto='.1f',
-                                title=f"Taux de traitement par {agg_col} (%)"
-                            )
+                            # Arrondir les pourcentages pour un affichage propre
+                            df_eff['taux_affichage'] = df_eff['taux_traitement'].round(1)
                             
-                            fig_eff.update_traces(texttemplate='%{text}%', textposition='outside')
+                            fig_eff = go.Figure()
+                            
+                            fig_eff.add_trace(go.Bar(
+                                x=df_eff[agg_col],
+                                y=df_eff['taux_traitement'],
+                                text=df_eff['taux_affichage'].astype(str) + '%',
+                                textposition='outside',
+                                marker_color='lightcoral'
+                            ))
+                            
                             fig_eff.update_layout(
+                                title=f"Taux de traitement par {agg_col} (%)",
                                 xaxis_title=agg_col.replace('_', ' ').title(),
                                 yaxis_title="Taux de traitement (%)",
-                                height=500
+                                height=500,
+                                showlegend=False
                             )
+                            
+                            # Améliorer l'affichage des axes
+                            fig_eff.update_xaxes(tickangle=-45)
+                            fig_eff.update_yaxes(range=[0, max(df_eff['taux_traitement']) * 1.1])
                             
                             st.plotly_chart(fig_eff, use_container_width=True)
                 else:
