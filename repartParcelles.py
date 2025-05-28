@@ -42,6 +42,20 @@ def afficher_dashboard_parcelles(df_parcelles):
                 title="Répartition globale des parcelles NICAD",
                 labels={"nicad": "Statut NICAD"}
             )
+            fig_global_nicad.update_traces(
+                textposition='inside',
+                textinfo='percent+label'
+            )
+            fig_global_nicad.update_layout(
+                showlegend=True,
+                legend=dict(
+                    orientation="v",
+                    yanchor="top",
+                    y=1,
+                    xanchor="left",
+                    x=1.05
+                )
+            )
             st.plotly_chart(fig_global_nicad, use_container_width=True)
         
         with col_deliberation:
@@ -51,6 +65,20 @@ def afficher_dashboard_parcelles(df_parcelles):
                 names="statut_deliberation",
                 title="Répartition des parcelles délibérées",
                 labels={"statut_deliberation": "Statut délibération"}
+            )
+            fig_global_deliberation.update_traces(
+                textposition='inside',
+                textinfo='percent+label'
+            )
+            fig_global_deliberation.update_layout(
+                showlegend=True,
+                legend=dict(
+                    orientation="v",
+                    yanchor="top",
+                    y=1,
+                    xanchor="left",
+                    x=1.05
+                )
             )
             st.plotly_chart(fig_global_deliberation, use_container_width=True)
         
@@ -73,15 +101,65 @@ def afficher_dashboard_parcelles(df_parcelles):
         if "type_usag" in df_parcelles.columns:
             st.subheader("🏗️ Répartition par usage des parcelles")
             
+            # Option pour choisir le type de visualisation
+            type_viz_usage = st.radio(
+                "Type de visualisation :", 
+                ["Graphique en secteurs", "Graphique en barres"],
+                key="viz_usage_global"
+            )
+            
             col_usage, col_usage_delib = st.columns(2)
             
             with col_usage:
-                fig_usage = px.pie(
-                    df_parcelles, 
-                    names="type_usag", 
-                    title="Répartition des usages",
-                    labels={"type_usag": "Usage"}
-                )
+                if type_viz_usage == "Graphique en secteurs":
+                    # Calculer les pourcentages pour affichage personnalisé
+                    usage_counts = df_parcelles["type_usag"].value_counts()
+                    usage_percentages = (usage_counts / len(df_parcelles) * 100).round(1)
+                    
+                    fig_usage = px.pie(
+                        values=usage_counts.values,
+                        names=usage_counts.index,
+                        title="Répartition des usages"
+                    )
+                    
+                    # Configuration améliorée pour les labels
+                    fig_usage.update_traces(
+                        textposition='auto',
+                        textinfo='label+percent',
+                        textfont_size=10,
+                        pull=[0.05 if val < usage_counts.max() * 0.1 else 0 for val in usage_counts.values]  # Séparer les petites parts
+                    )
+                    
+                    fig_usage.update_layout(
+                        showlegend=True,
+                        legend=dict(
+                            orientation="v",
+                            yanchor="middle",
+                            y=0.5,
+                            xanchor="left",
+                            x=1.05,
+                            font=dict(size=10)
+                        ),
+                        margin=dict(l=20, r=120, t=50, b=20),
+                        height=400
+                    )
+                    
+                else:
+                    # Graphique en barres horizontal pour plus de lisibilité
+                    usage_counts = df_parcelles["type_usag"].value_counts().reset_index()
+                    usage_counts.columns = ['Usage', 'Nombre']
+                    
+                    fig_usage = px.bar(
+                        usage_counts,
+                        x='Nombre',
+                        y='Usage',
+                        orientation='h',
+                        title="Répartition des usages",
+                        text='Nombre'
+                    )
+                    fig_usage.update_traces(texttemplate='%{text}', textposition='outside')
+                    fig_usage.update_layout(height=400, yaxis={'categoryorder':'total ascending'})
+                
                 st.plotly_chart(fig_usage, use_container_width=True)
             
             with col_usage_delib:
@@ -97,7 +175,24 @@ def afficher_dashboard_parcelles(df_parcelles):
                     title="Délibération par type d'usage",
                     labels={"type_usag": "Usage", "statut_deliberation": "Statut délibération"}
                 )
+                # Rotation des labels sur l'axe x pour éviter la superposition
+                fig_usage_delib.update_layout(
+                    xaxis_tickangle=-45,
+                    height=400,
+                    margin=dict(b=100)
+                )
                 st.plotly_chart(fig_usage_delib, use_container_width=True)
+            
+            # Tableau récapitulatif des usages
+            with st.expander("📋 Tableau détaillé des usages"):
+                usage_summary = df_parcelles.groupby("type_usag").agg({
+                    "type_usag": "count",
+                    "superficie": ["sum", "mean"]
+                }).round(2)
+                usage_summary.columns = ["Nombre de parcelles", "Superficie totale (m²)", "Superficie moyenne (m²)"]
+                usage_summary["Pourcentage"] = (usage_summary["Nombre de parcelles"] / len(df_parcelles) * 100).round(1)
+                usage_summary = usage_summary[["Nombre de parcelles", "Pourcentage", "Superficie totale (m²)", "Superficie moyenne (m²)"]]
+                st.dataframe(usage_summary)
     
     # ===== TAB 2: ANALYSE PAR COMMUNE =====
     with tab_par_commune:
@@ -120,6 +215,7 @@ def afficher_dashboard_parcelles(df_parcelles):
                     title="Parcelles avec/sans NICAD par commune",
                     labels={"nicad": "NICAD"}
                 )
+                fig_commune_nicad.update_layout(xaxis_tickangle=-45)
                 st.plotly_chart(fig_commune_nicad, use_container_width=True)
             else:
                 commune_delib_data = df_parcelles.groupby(["commune", "statut_deliberation"]).size().reset_index(
@@ -133,6 +229,7 @@ def afficher_dashboard_parcelles(df_parcelles):
                     title="Parcelles délibérées/non délibérées par commune",
                     labels={"statut_deliberation": "Statut délibération"}
                 )
+                fig_commune_delib.update_layout(xaxis_tickangle=-45)
                 st.plotly_chart(fig_commune_delib, use_container_width=True)
         
         with subtab_taux:
@@ -157,8 +254,11 @@ def afficher_dashboard_parcelles(df_parcelles):
                 title="Taux de délibération par commune (%)",
                 color="Taux de délibération (%)",
                 color_continuous_scale=["red", "orange", "green"],
-                labels={"commune": "Commune"}
+                labels={"commune": "Commune"},
+                text="Taux de délibération (%)"
             )
+            fig_taux_delib.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+            fig_taux_delib.update_layout(xaxis_tickangle=-45)
 
             st.plotly_chart(fig_taux_delib, use_container_width=True)
 
@@ -192,22 +292,56 @@ def afficher_dashboard_parcelles(df_parcelles):
         subtab_nicad, subtab_delib = st.tabs(["📊 Répartition NICAD", "🔄 Répartition Délibération"])
 
         with subtab_nicad:
-            fig_village_nicad = px.pie(
-                df_filtre, 
-                names="nicad", 
-                title="Répartition NICAD - Données filtrées",
-                labels={"nicad": "NICAD"}
-            )
-            st.plotly_chart(fig_village_nicad, use_container_width=True)
+            if len(df_filtre) > 0:
+                fig_village_nicad = px.pie(
+                    df_filtre, 
+                    names="nicad", 
+                    title="Répartition NICAD - Données filtrées",
+                    labels={"nicad": "NICAD"}
+                )
+                fig_village_nicad.update_traces(
+                    textposition='inside',
+                    textinfo='percent+label'
+                )
+                fig_village_nicad.update_layout(
+                    showlegend=True,
+                    legend=dict(
+                        orientation="v",
+                        yanchor="top",
+                        y=1,
+                        xanchor="left",
+                        x=1.05
+                    )
+                )
+                st.plotly_chart(fig_village_nicad, use_container_width=True)
+            else:
+                st.warning("Aucune donnée à afficher pour cette sélection.")
 
         with subtab_delib:
-            fig_village_delib = px.pie(
-                df_filtre, 
-                names="statut_deliberation",
-                title="Répartition délibération - Données filtrées",
-                labels={"statut_deliberation": "Délibération"}
-            )
-            st.plotly_chart(fig_village_delib, use_container_width=True)
+            if len(df_filtre) > 0:
+                fig_village_delib = px.pie(
+                    df_filtre, 
+                    names="statut_deliberation",
+                    title="Répartition délibération - Données filtrées",
+                    labels={"statut_deliberation": "Délibération"}
+                )
+                fig_village_delib.update_traces(
+                    textposition='inside',
+                    textinfo='percent+label'
+                )
+                fig_village_delib.update_layout(
+                    showlegend=True,
+                    legend=dict(
+                        orientation="v",
+                        yanchor="top",
+                        y=1,
+                        xanchor="left",
+                        x=1.05
+                    )
+                )
+                st.plotly_chart(fig_village_delib, use_container_width=True)
+            else:
+                st.warning("Aucune donnée à afficher pour cette sélection.")
 
     # ===== TAB 4: DONNÉES =====
     with tab_donnees:
@@ -243,5 +377,3 @@ def afficher_dashboard_parcelles(df_parcelles):
         
         # Affichage du tableau filtré
         st.dataframe(df_filtre_final[colonnes_affichees], use_container_width=True)
-
-
