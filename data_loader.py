@@ -32,7 +32,7 @@ def charger_parcelles():
                 df["village"] = df["village"].fillna("Non spécifié").replace("", "Non spécifié")
                 df["commune"] = df["commune"].fillna("Non spécifié").replace("", "Non spécifié")
                 
-                st.success(f"✅ Données parcelles chargées depuis: {chemin}")
+                print(f"✅ Données parcelles chargées depuis: {chemin}")
                 return df
         except Exception as e:
             continue
@@ -105,7 +105,7 @@ def charger_levee_par_commune():
             if os.path.exists(chemin):
                 df = pd.read_excel(chemin, engine="openpyxl")
                 df.columns = df.columns.str.strip().str.lower()
-                st.success(f"✅ Données levée par commune chargées depuis: {chemin}")
+                print(f"✅ Données levée par commune chargées depuis: {chemin}")
                 return df
         except Exception as e:
             continue
@@ -134,7 +134,7 @@ def charger_parcelles_terrain_periode():
                 df.columns = df.columns.str.strip().str.lower()
                 df['date de debut'] = pd.to_datetime(df['date de debut'], errors='coerce')
                 df['date de fin'] = pd.to_datetime(df['date de fin'], errors='coerce')
-                st.success(f"✅ Données parcelles terrain période chargées depuis: {chemin}")
+                print(f"✅ Données parcelles terrain période chargées depuis: {chemin}")
                 return df
         except Exception as e:
             continue
@@ -161,7 +161,7 @@ def charger_etapes():
             if os.path.exists(chemin):
                 df = pd.read_excel(chemin, engine="openpyxl")
                 df.fillna("", inplace=True)
-                st.success(f"✅ Données étapes chargées depuis: {chemin}")
+                print(f"✅ Données étapes chargées depuis: {chemin}")
                 return df
         except Exception as e:
             continue
@@ -189,7 +189,7 @@ def charger_parcelles_post_traitement():
             if os.path.exists(chemin):
                 df = pd.read_excel(chemin, engine="openpyxl")
                 df.columns = df.columns.str.strip().str.lower()
-                st.success(f"✅ Données post-traitement chargées depuis: {chemin}")
+                print(f"✅ Données post-traitement chargées depuis: {chemin}")
                 return df
         except Exception as e:
             continue
