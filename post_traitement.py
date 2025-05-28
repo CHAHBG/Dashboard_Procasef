@@ -22,7 +22,7 @@ def afficher_analyse_parcelles():
     df_post_traitement = charger_parcelles_post_traitement()
     
     # Création de 3 onglets pour l'analyse
-    tab1, tab2, tab3 = st.tabs(["🏘️ Levées par Commune/Région", "📆 Évolution Temporelle", "📊 Post-traitement Géométrique"])
+    tab1, tab2, tab3 = st.tabs(["🏘️ Levées par Commune/Région", "📆 Évolution Temporelle", "📊 Post-traitement"])
     
     # Onglet 1: Analyse des levées par commune et région
     with tab1:
