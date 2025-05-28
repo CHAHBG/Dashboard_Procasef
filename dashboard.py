@@ -6,7 +6,7 @@ import base64
 # Configuration de la page - DOIT ÊTRE EN PREMIER
 st.set_page_config(
     page_title="PROCASEF - Boundou",
-    page_icon="logo/BETPLUSAUDETAG.png",  # Icône de l'onglet
+    page_icon="logo/BETPLUSAUDETAG.jpg",  # Icône de l'onglet
     layout="wide"
 )
 
