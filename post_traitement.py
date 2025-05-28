@@ -459,7 +459,7 @@ def afficher_analyse_parcelles():
                         # Efficacité du traitement
                         st.subheader("⚙️ Efficacité du Post-traitement")
                         
-                        # Calculer le taux de traitement
+                         # Calculer le taux de traitement
                         df_filtre_calc = df_filtre.copy()
                         df_filtre_calc['taux_traitement'] = (df_filtre_calc[processed_col] / df_filtre_calc[received_col] * 100).fillna(0)
                         
@@ -483,20 +483,30 @@ def afficher_analyse_parcelles():
                                 axis=1
                             )
                             
-                            fig_eff = px.bar(
-                                df_eff,
-                                x=agg_col,
-                                y='taux_traitement',
-                                text_auto='.1f',
-                                title=f"Taux de traitement par {agg_col} (%)"
-                            )
+                            # Arrondir les pourcentages pour un affichage propre
+                            df_eff['taux_affichage'] = df_eff['taux_traitement'].round(1)
                             
-                            fig_eff.update_traces(texttemplate='%{text}%', textposition='outside')
+                            fig_eff = go.Figure()
+                            
+                            fig_eff.add_trace(go.Bar(
+                                x=df_eff[agg_col],
+                                y=df_eff['taux_traitement'],
+                                text=df_eff['taux_affichage'].astype(str) + '%',
+                                textposition='outside',
+                                marker_color='lightcoral'
+                            ))
+                            
                             fig_eff.update_layout(
+                                title=f"Taux de traitement par {agg_col} (%)",
                                 xaxis_title=agg_col.replace('_', ' ').title(),
                                 yaxis_title="Taux de traitement (%)",
-                                height=500
+                                height=500,
+                                showlegend=False
                             )
+                            
+                            # Améliorer l'affichage des axes
+                            fig_eff.update_xaxes(tickangle=-45)
+                            fig_eff.update_yaxes(range=[0, max(df_eff['taux_traitement']) * 1.1])
                             
                             st.plotly_chart(fig_eff, use_container_width=True)
                 else:
