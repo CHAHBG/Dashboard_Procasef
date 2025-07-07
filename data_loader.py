@@ -37,9 +37,20 @@ def charger_parcelles():
         except Exception as e:
             continue
     
-    # Si aucun fichier n'est trouvé, afficher une interface de téléchargement
+    # Si aucun fichier n'est trouvé, retourner un DataFrame vide avec les colonnes requises
+    return pd.DataFrame(columns=[
+        'commune', 'village', 'nicad', 'statut_deliberation', 'superficie', 'type_usag'
+    ])
+
+def interface_telechargement_fichier():
+    """Interface séparée pour le téléchargement de fichier (non cachée)"""
     st.error("❌ Fichier 'parcelles.xlsx' introuvable")
     st.info("📁 Emplacements recherchés:")
+    chemins_possibles = [
+        "data/parcelles.xlsx",
+        "parcelles.xlsx", 
+        "./data/parcelles.xlsx"
+    ]
     for chemin in chemins_possibles:
         st.write(f"- {chemin}")
     
@@ -72,6 +83,9 @@ def charger_parcelles():
             
             st.success("✅ Fichier chargé avec succès!")
             
+            # Sauvegarder le fichier dans le cache de session
+            st.session_state['df_parcelles_uploaded'] = df
+            
             # Afficher un aperçu des données
             st.write("**Aperçu des données:**")
             st.write(f"- Nombre de lignes: {df.shape[0]}")
@@ -86,10 +100,14 @@ def charger_parcelles():
             
         except Exception as e:
             st.error(f"❌ Erreur lors du chargement du fichier: {str(e)}")
-            return pd.DataFrame()
+            return pd.DataFrame(columns=[
+                'commune', 'village', 'nicad', 'statut_deliberation', 'superficie', 'type_usag'
+            ])
     
     # Retourner un DataFrame vide si aucun fichier n'est disponible
-    return pd.DataFrame()
+    return pd.DataFrame(columns=[
+        'commune', 'village', 'nicad', 'statut_deliberation', 'superficie', 'type_usag'
+    ])
 
 @st.cache_data
 def charger_levee_par_commune():
