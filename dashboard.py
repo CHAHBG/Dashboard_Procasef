@@ -20,7 +20,8 @@ from data_loader import (
     charger_parcelles,
     charger_levee_par_commune,
     charger_parcelles_terrain_periode,
-    charger_etapes
+    charger_etapes,
+    interface_telechargement_fichier
 )
 
 # --- FONCTIONS UTILES ---
@@ -120,8 +121,26 @@ def main():
     # --- CONTENU PRINCIPAL ---
     st.title("📊 Tableau de Bord PROCASEF - Boundou")
 
+    # Chargement des données avec gestion des erreurs
+    df_parcelles = charger_parcelles()
+    
+    # Vérifier si les données sont présentes
+    if df_parcelles.empty:
+        # Vérifier si on a des données uploadées dans la session
+        if 'df_parcelles_uploaded' in st.session_state:
+            df_parcelles = st.session_state['df_parcelles_uploaded']
+        else:
+            # Afficher l'interface de téléchargement
+            df_uploaded = interface_telechargement_fichier()
+            if not df_uploaded.empty:
+                df_parcelles = df_uploaded
+            else:
+                # Afficher un message d'information et arrêter l'exécution
+                st.info("🔄 Veuillez télécharger un fichier de données pour commencer l'analyse.")
+                return
+
+    # Maintenant procéder avec l'affichage des différents modules
     if selected == "Répartition des parcelles":
-        df_parcelles = charger_parcelles()
         repartParcelles.afficher_dashboard_parcelles(df_parcelles)
 
     elif selected == "État d'avancement":
