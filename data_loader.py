@@ -9,9 +9,9 @@ import os
 def charger_parcelles():
     """Charge les données des parcelles depuis le fichier Excel"""
     chemins_possibles = [
-        'data/parcelles.xlsx',
-        'parcelles.xlsx',
-        './data/parcelles.xlsx'
+        "data/parcelles.xlsx,
+        "parcelles.xlsx,
+        "./data/parcelles.xlsx"
     ]
     
     for chemin in chemins_possibles:
