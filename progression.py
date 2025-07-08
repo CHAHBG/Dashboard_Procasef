@@ -42,46 +42,84 @@ def charger_donnees_etapes():
     """
     Charge et prépare les données d'état d'avancement
     """
-    df_etapes = pd.read_excel("data/Etat des opérations Boundou-Mai 2025.xlsx", engine="openpyxl")
-    df_etapes.fillna("", inplace=True)
+    try:
+        df_etapes = pd.read_excel("data/Etat des opérations Boundou-Mai 2025.xlsx", engine="openpyxl")
+        df_etapes.fillna("", inplace=True)
 
-    # Calcul du progrès en pourcentage
-    df_etapes["Progrès (%)"] = df_etapes["Progrès des étapes"].apply(evaluer_progres)
+        # Calcul du progrès en pourcentage
+        df_etapes["Progrès (%)"] = df_etapes["Progrès des étapes"].apply(evaluer_progres)
 
-    return df_etapes
+        return df_etapes
+    except FileNotFoundError:
+        st.error("Le fichier 'data/Etat des opérations Boundou-Mai 2025.xlsx' n'a pas été trouvé.")
+        return pd.DataFrame()
+    except Exception as e:
+        st.error(f"Erreur lors du chargement des données : {str(e)}")
+        return pd.DataFrame()
 
 
 def evaluer_progres(etapes):
     """
     Évalue le progrès d'une commune basé sur les étapes décrites
     """
+    # Handle None, NaN, or non-string values
+    if etapes is None or pd.isna(etapes) or not isinstance(etapes, str):
+        return 0.0
+    
+    # Handle empty string
+    if etapes.strip() == "":
+        return 0.0
+    
     # Considère une étape débutée même si elle n'est pas encore complétée
     total = 4  # 4 étapes clés
     score = 0
-    etapes_list = [e.strip().lower() for e in etapes.split("\n") if e.strip() != ""]
-
-    for etape in etapes_list:
-        if "complét" in etape or "affichage public (complétés)" in etape:
-            score += 1
-        elif "en cours" in etape or "débuté" in etape or "commencé" in etape:
-            score += 0.5  # Attribuer un demi-point pour les étapes en cours
-
-    return (score / total) * 100
+    
+    try:
+        etapes_list = [e.strip().lower() for e in etapes.split("\n") if e.strip() != ""]
+        
+        for etape in etapes_list:
+            if "complét" in etape or "affichage public (complétés)" in etape:
+                score += 1
+            elif "en cours" in etape or "débuté" in etape or "commencé" in etape:
+                score += 0.5  # Attribuer un demi-point pour les étapes en cours
+        
+        return (score / total) * 100
+    
+    except Exception as e:
+        # Log the error for debugging (optional)
+        print(f"Error processing etapes: {etapes}, Error: {e}")
+        return 0.0
 
 
 def filtrer_donnees(df_etapes):
     """
     Filtre les données selon les sélections de l'utilisateur
     """
+    if df_etapes.empty:
+        return "Toutes", "Toutes", "Tous", df_etapes
+    
+    # Vérifier si les colonnes existent
+    if "Région" not in df_etapes.columns:
+        st.error("La colonne 'Région' n'existe pas dans les données.")
+        return "Toutes", "Toutes", "Tous", df_etapes
+    
     regions = ["Toutes"] + sorted(df_etapes["Région"].dropna().unique())
     region_sel = st.selectbox("🌍 Choisir une région :", regions)
     df_etapes_filtre = df_etapes if region_sel == "Toutes" else df_etapes[df_etapes["Région"] == region_sel]
 
+    if "Commune" not in df_etapes.columns:
+        st.error("La colonne 'Commune' n'existe pas dans les données.")
+        return region_sel, "Toutes", "Tous", df_etapes_filtre
+    
     commune_sel = st.selectbox("🏘️ Choisir une commune :",
                                ["Toutes"] + sorted(df_etapes_filtre["Commune"].unique()))
     df_etapes_filtre = df_etapes_filtre if commune_sel == "Toutes" else df_etapes_filtre[
         df_etapes_filtre["Commune"] == commune_sel]
 
+    if "CSIG" not in df_etapes.columns:
+        st.error("La colonne 'CSIG' n'existe pas dans les données.")
+        return region_sel, commune_sel, "Tous", df_etapes_filtre
+    
     csig_sel = st.selectbox("📌 Choisir un CSIG :",
                             ["Tous"] + sorted(df_etapes_filtre["CSIG"].unique()))
     df_etapes_filtre = df_etapes_filtre if csig_sel == "Tous" else df_etapes_filtre[
@@ -117,6 +155,10 @@ def afficher_vue_globale(df_etapes):
     """
     st.subheader("📊 Vue globale de l'avancement du projet")
 
+    if df_etapes.empty:
+        st.warning("Aucune donnée disponible pour afficher la vue globale.")
+        return
+
     # Calculer le nombre de communes débutées
     communes_debutees = df_etapes[df_etapes["Progrès (%)"] > 0]
     pourcentage_debutees = (len(communes_debutees) / len(df_etapes)) * 100 if len(df_etapes) > 0 else 0
@@ -131,9 +173,10 @@ def afficher_vue_globale(df_etapes):
         st.metric("Pourcentage de démarrage", f"{pourcentage_debutees:.1f}%")
 
     # Pour diagnostic: Afficher les détails des communes débutées
-    with st.expander("Détails des communes débutées (diagnostic)", expanded=False):
-        st.dataframe(communes_debutees[["Commune", "Progrès (%)", "Progrès des étapes"]],
-                     use_container_width=True)
+    if len(communes_debutees) > 0:
+        with st.expander("Détails des communes débutées (diagnostic)", expanded=False):
+            st.dataframe(communes_debutees[["Commune", "Progrès (%)", "Progrès des étapes"]],
+                         use_container_width=True)
 
     # Graphique d'avancement par région
     afficher_avancement_regions(df_etapes)
@@ -148,8 +191,16 @@ def afficher_avancement_regions(df_etapes):
     """
     st.subheader("📈 Avancement moyen par région")
 
+    if df_etapes.empty or "Région" not in df_etapes.columns:
+        st.warning("Pas de données disponibles pour afficher l'avancement par région.")
+        return
+
     # Calculer la moyenne de progression par région
     region_progress = df_etapes.groupby("Région")["Progrès (%)"].mean().reset_index()
+
+    if region_progress.empty:
+        st.warning("Aucune donnée de progression par région disponible.")
+        return
 
     # Créer un graphique à barres pour les régions
     fig_regions_bar = px.bar(
@@ -178,6 +229,10 @@ def afficher_resume_etat_avancement(df_etapes):
     """
     st.subheader("🔍 Résumé des communes par état d'avancement")
 
+    if df_etapes.empty:
+        st.warning("Aucune donnée disponible pour le résumé d'état d'avancement.")
+        return
+
     # Catégoriser les communes par leur état d'avancement
     df_etapes["Catégorie"] = pd.cut(
         df_etapes["Progrès (%)"],
@@ -188,6 +243,10 @@ def afficher_resume_etat_avancement(df_etapes):
 
     resume = df_etapes["Catégorie"].value_counts().reset_index()
     resume.columns = ["État d'avancement", "Nombre de communes"]
+
+    if resume.empty:
+        st.warning("Aucune donnée de catégorisation disponible.")
+        return
 
     fig_resume = px.pie(
         resume,
@@ -213,6 +272,10 @@ def afficher_vue_region(df_etapes_filtre, region_sel):
     """
     st.subheader(f"📊 Vue d'ensemble pour la région: {region_sel}")
 
+    if df_etapes_filtre.empty:
+        st.warning(f"Aucune donnée disponible pour la région {region_sel}.")
+        return
+
     # Statistiques pour la région
     communes_region = len(df_etapes_filtre)
     communes_debutees_region = len(df_etapes_filtre[df_etapes_filtre["Progrès (%)"] > 0])
@@ -236,8 +299,16 @@ def afficher_tableau_communes_region(df_etapes_filtre, region_sel):
     """
     st.subheader(f"🏘️ Résumé des communes de {region_sel}")
 
+    if df_etapes_filtre.empty:
+        st.warning(f"Aucune commune trouvée pour la région {region_sel}.")
+        return
+
     # Créer un tableau synthétique des communes
-    resume_communes = df_etapes_filtre[["Commune", "CSIG", "Progrès (%)", "Date Début"]].copy()
+    colonnes_necessaires = ["Commune", "CSIG", "Progrès (%)"]
+    if "Date Début" in df_etapes_filtre.columns:
+        colonnes_necessaires.append("Date Début")
+    
+    resume_communes = df_etapes_filtre[colonnes_necessaires].copy()
 
     # Ajouter une colonne pour l'indicateur visuel
     resume_communes["État"] = resume_communes["Progrès (%)"].apply(get_progress_indicator)
@@ -396,7 +467,13 @@ def afficher_infos_commune(row):
     st.write(f"📅 **Date de fin prévue** : {expected_end_date}")
 
     # Affichage des étapes d'avancement sous forme de tableau
-    etapes = row.get("Progrès des étapes", "").split("\n")
+    etapes_raw = row.get("Progrès des étapes", "")
+    
+    # Gestion sécurisée des étapes
+    if etapes_raw is None or pd.isna(etapes_raw) or not isinstance(etapes_raw, str):
+        etapes = ["Non spécifié"] * 4
+    else:
+        etapes = etapes_raw.split("\n")
 
     st.write("#### 🔄 Progression des étapes:")
 
@@ -430,6 +507,3 @@ def afficher_progression(df_etapes=None):
         df_etapes: DataFrame optionnel contenant les données d'avancement
     """
     afficher_etat_avancement(df_etapes)
-
-
-    afficher_etat_avancement()
