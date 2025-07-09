@@ -98,8 +98,15 @@ def charger_donnees_genre():
         df_repartition_genre = pd.read_excel("genre/Repartition genre.xlsx", engine="openpyxl")
         df_genre_commune = pd.read_excel("genre/Genre par Commune.xlsx", engine="openpyxl")
         return df_genre_trimestre, df_repartition_genre, df_genre_commune
-    except FileNotFoundError:
-        st.error("Fichiers de données non trouvés. Veuillez vérifier le chemin.")
+    except FileNotFoundError as e:
+        st.error(f"Fichiers de données non trouvés: {e}")
+        st.info("Veuillez vérifier que les fichiers suivants existent:")
+        st.info("- genre/Genre par trimestre.xlsx")
+        st.info("- genre/Repartition genre.xlsx") 
+        st.info("- genre/Genre par Commune.xlsx")
+        return None, None, None
+    except Exception as e:
+        st.error(f"Erreur lors du chargement des données: {e}")
         return None, None, None
 
 def create_modern_metric_card(title, value, color_class=""):
@@ -287,7 +294,7 @@ def main():
     # Chargement des données
     df_genre_trimestre, df_repartition_genre, df_genre_commune = charger_donnees_genre()
     
-    if df_genre_trimestre is None:
+    if df_genre_trimestre is None or df_repartition_genre is None or df_genre_commune is None:
         st.stop()
     
     # Titre principal avec style
@@ -316,12 +323,23 @@ def main():
         step=1
     )
     
+    # Vérification des colonnes nécessaires
+    if "Total_Nombre" not in df_repartition_genre.columns:
+        st.error("La colonne 'Total_Nombre' n'existe pas dans les données de répartition")
+        st.info("Colonnes disponibles: " + str(list(df_repartition_genre.columns)))
+        st.stop()
+    
     # Calcul des statistiques globales
-    total_femmes = int(df_repartition_genre[df_repartition_genre["Genre"] == "Femme"]["Total_Nombre"].iloc[0])
-    total_hommes = int(df_repartition_genre[df_repartition_genre["Genre"] == "Homme"]["Total_Nombre"].iloc[0])
-    total_general = total_femmes + total_hommes
-    pourcentage_femmes = round((total_femmes / total_general) * 100, 1)
-    ratio_hf = round(total_hommes / total_femmes, 2)
+    try:
+        total_femmes = int(df_repartition_genre[df_repartition_genre["Genre"] == "Femme"]["Total_Nombre"].iloc[0])
+        total_hommes = int(df_repartition_genre[df_repartition_genre["Genre"] == "Homme"]["Total_Nombre"].iloc[0])
+        total_general = total_femmes + total_hommes
+        pourcentage_femmes = round((total_femmes / total_general) * 100, 1)
+        ratio_hf = round(total_hommes / total_femmes, 2)
+    except (IndexError, KeyError) as e:
+        st.error(f"Erreur lors du calcul des statistiques: {e}")
+        st.info("Vérifiez que les données contiennent bien les genres 'Femme' et 'Homme'")
+        st.stop()
     
     # Métriques principales (toujours visibles)
     st.markdown('<div class="section-header">📈 STATISTIQUES GLOBALES</div>', unsafe_allow_html=True)
@@ -364,16 +382,32 @@ def main():
     elif vue_selectionnee == "Analyse par commune":
         st.markdown('<div class="section-header">🗺️ ANALYSE PAR COMMUNE</div>', unsafe_allow_html=True)
         
+        # Vérification des colonnes nécessaires
+        if "communeSenegal" not in df_genre_commune.columns:
+            st.error("La colonne 'communeSenegal' n'existe pas dans les données par commune")
+            st.info("Colonnes disponibles: " + str(list(df_genre_commune.columns)))
+            st.stop()
+        
         # Filtre commune
         communes = df_genre_commune["communeSenegal"].unique()
         commune_selectionnee = st.selectbox("🏘️ Sélectionner une commune", communes)
         
         # Données de la commune sélectionnée
         df_commune = df_genre_commune[df_genre_commune["communeSenegal"] == commune_selectionnee]
-        femmes_c = int(df_commune["Femme"].iloc[0])
-        hommes_c = int(df_commune["Homme"].iloc[0])
-        total_c = femmes_c + hommes_c
-        pourcentage_femmes_c = round((femmes_c / total_c) * 100, 1)
+        
+        if df_commune.empty:
+            st.error(f"Aucune donnée trouvée pour la commune: {commune_selectionnee}")
+            st.stop()
+        
+        try:
+            femmes_c = int(df_commune["Femme"].iloc[0])
+            hommes_c = int(df_commune["Homme"].iloc[0])
+            total_c = femmes_c + hommes_c
+            pourcentage_femmes_c = round((femmes_c / total_c) * 100, 1)
+        except (KeyError, IndexError) as e:
+            st.error(f"Erreur lors du calcul des statistiques pour la commune: {e}")
+            st.info("Vérifiez que les colonnes 'Femme' et 'Homme' existent dans les données")
+            st.stop()
         
         # Métriques de la commune
         col1, col2, col3 = st.columns(3)
@@ -451,6 +485,9 @@ def main():
             with col2:
                 femmes_type = int(df_repartition_genre[df_repartition_genre["Genre"] == "Femme"][col_nb].iloc[0])
                 st.metric("👩 Femmes", f"{femmes_type:,}")
+        else:
+            st.error(f"La colonne '{col_nb}' n'existe pas dans les données")
+            st.info("Colonnes disponibles: " + str(list(df_repartition_genre.columns)))
         
         # Comparaison de tous les types
         st.markdown("### 📊 Comparaison tous types")
@@ -481,6 +518,12 @@ def main():
         st.markdown('<div class="section-header">📅 ÉVOLUTION TEMPORELLE</div>', unsafe_allow_html=True)
         
         if "PeriodeTrimestrielle" in df_genre_trimestre.columns:
+            # Vérification des colonnes nécessaires
+            if "Femme" not in df_genre_trimestre.columns or "Homme" not in df_genre_trimestre.columns:
+                st.error("Les colonnes 'Femme' et 'Homme' n'existent pas dans les données trimestrielles")
+                st.info("Colonnes disponibles: " + str(list(df_genre_trimestre.columns)))
+                st.stop()
+            
             # Graphique d'évolution
             fig_evol = create_area_chart(
                 df_genre_trimestre,
@@ -494,6 +537,9 @@ def main():
             # Tableau de données
             st.markdown("### 📋 Données détaillées")
             st.dataframe(df_genre_trimestre, use_container_width=True)
+        else:
+            st.error("La colonne 'PeriodeTrimestrielle' n'existe pas dans les données")
+            st.info("Colonnes disponibles: " + str(list(df_genre_trimestre.columns)))
     
     # Footer
     st.markdown("---")
