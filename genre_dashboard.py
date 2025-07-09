@@ -1,155 +1,507 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import time
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import numpy as np
+
+# Configuration de la page
+st.set_page_config(
+    page_title="Analyse Genre - Dashboard",
+    page_icon="👫",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# CSS personnalisé pour un look moderne
+st.markdown("""
+<style>
+    .main > div {
+        padding-top: 2rem;
+    }
+    
+    .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin: 0.5rem 0;
+    }
+    
+    .metric-card h3 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    
+    .metric-card p {
+        margin: 0;
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    .metric-card-female {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .metric-card-male {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .metric-card-total {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    
+    .ratio-card {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    
+    .sidebar .sidebar-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .stSelectbox > div > div {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+    }
+    
+    .filter-header {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        text-align: center;
+        font-weight: 600;
+    }
+    
+    .section-header {
+        background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        text-align: center;
+        font-weight: 600;
+        font-size: 1.2rem;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 @st.cache_data
 def charger_donnees_genre():
-    df_genre_trimestre = pd.read_excel("genre/Genre par trimestre.xlsx", engine="openpyxl")
-    df_repartition_genre = pd.read_excel("genre/Repartition genre.xlsx", engine="openpyxl")
-    df_genre_commune = pd.read_excel("genre/Genre par Commune.xlsx", engine="openpyxl")
-    return df_genre_trimestre, df_repartition_genre, df_genre_commune
+    """Chargement des données avec gestion d'erreurs"""
+    try:
+        df_genre_trimestre = pd.read_excel("genre/Genre par trimestre.xlsx", engine="openpyxl")
+        df_repartition_genre = pd.read_excel("genre/Repartition genre.xlsx", engine="openpyxl")
+        df_genre_commune = pd.read_excel("genre/Genre par Commune.xlsx", engine="openpyxl")
+        return df_genre_trimestre, df_repartition_genre, df_genre_commune
+    except FileNotFoundError:
+        st.error("Fichiers de données non trouvés. Veuillez vérifier le chemin.")
+        return None, None, None
 
-def personnaliser_graphique(fig, titre=None):
+def create_modern_metric_card(title, value, color_class=""):
+    """Création d'une carte métrique moderne"""
+    return f"""
+    <div class="metric-card {color_class}">
+        <h3>{value:,}</h3>
+        <p>{title}</p>
+    </div>
+    """
+
+def create_gauge_chart(percentage, title, target=30):
+    """Création d'un graphique en jauge moderne"""
+    fig = go.Figure(go.Indicator(
+        mode = "gauge+number+delta",
+        value = percentage,
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {'text': title, 'font': {'size': 24, 'color': '#2c3e50'}},
+        delta = {'reference': target, 'increasing': {'color': "#27ae60"}, 'decreasing': {'color': "#e74c3c"}},
+        gauge = {
+            'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "darkblue"},
+            'bar': {'color': "#f39c12"},
+            'bgcolor': "white",
+            'borderwidth': 2,
+            'bordercolor': "gray",
+            'steps': [
+                {'range': [0, target], 'color': '#ffebee'},
+                {'range': [target, 100], 'color': '#e8f5e8'}
+            ],
+            'threshold': {
+                'line': {'color': "red", 'width': 4},
+                'thickness': 0.75,
+                'value': target
+            }
+        }
+    ))
+    
     fig.update_layout(
-        template="simple_white",
-        title=titre,
-        title_font=dict(size=20, color="gray"),
-        legend_title_text="Genre",
-        legend=dict(x=1, y=1),
-        margin=dict(l=40, r=40, t=50, b=40),
-        xaxis_title_font=dict(size=14),
-        yaxis_title_font=dict(size=14)
+        height=300,
+        font={'color': "#2c3e50", 'family': "Arial"},
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
     )
     return fig
 
-def afficher_jauge_objectif(pourcentage, seuil=30):
-    jauge = st.empty()
-    statut = st.empty()
-    for i in range(0, int(pourcentage) + 1):
-        barres = int(i / 5) * "█" + int((100 - i) / 5) * "░"
-        jauge.markdown(f"**🟡 Femmes : {i} %**\n\n`{barres}`")
-        time.sleep(0.1)
-    if pourcentage >= seuil:
-        statut.success("✅ Objectif atteint !")
-    else:
-        statut.error(f"❌ Objectif non atteint ({pourcentage}% < {seuil}%)")
-
-def afficher_repartition_genre():
-    df_genre_trimestre, df_repartition_genre, df_genre_commune = charger_donnees_genre()
-
-    st.title("👫🏿 Répartition du genre")
-
-    with st.expander("1️⃣ Statistiques globales et objectif 🔍", expanded=True):
-        col1, col2, col3 = st.columns(3)
-        total_femmes = int(df_repartition_genre[df_repartition_genre["Genre"] == "Femme"]["Total_Nombre"].iloc[0])
-        total_hommes = int(df_repartition_genre[df_repartition_genre["Genre"] == "Homme"]["Total_Nombre"].iloc[0])
-        total = total_femmes + total_hommes
-        pourcentage_femmes = round((total_femmes / total) * 100)
-
-        with col1:
-            st.metric("🟡 Femmes", f"{total_femmes:,}")
-        with col2:
-            st.metric("🔵 Hommes", f"{total_hommes:,}")
-        with col3:
-            st.metric("👥 Total", f"{total:,}")
-
-        st.subheader("🎯 Objectif de 30 % de femmes")
-        afficher_jauge_objectif(pourcentage_femmes)
-
-        fig_pie = px.pie(
-            df_repartition_genre,
-            names="Genre",
-            values="Total_Nombre",
-            color="Genre",
-            color_discrete_map={"Homme": "steelblue", "Femme": "goldenrod"},
-            hole=0.4
+def create_modern_pie_chart(data, names, values, title, colors=None):
+    """Création d'un graphique en secteurs moderne"""
+    if colors is None:
+        colors = ['#3498db', '#e74c3c', '#f39c12', '#27ae60']
+    
+    fig = px.pie(
+        data, 
+        names=names, 
+        values=values,
+        title=title,
+        color_discrete_sequence=colors,
+        hole=0.4
+    )
+    
+    fig.update_traces(
+        textposition='inside',
+        textinfo='percent+label',
+        hovertemplate='<b>%{label}</b><br>Nombre: %{value:,}<br>Pourcentage: %{percent}<extra></extra>',
+        pull=[0.1 if i == 0 else 0 for i in range(len(data))]
+    )
+    
+    fig.update_layout(
+        font=dict(size=14, color='#2c3e50'),
+        title_font=dict(size=20, color='#2c3e50'),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=400,
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.2,
+            xanchor="center",
+            x=0.5
         )
-        fig_pie = personnaliser_graphique(fig_pie, "📊 Répartition globale 🔵🟡")
-        st.plotly_chart(fig_pie, use_container_width=True)
+    )
+    return fig
 
-    with st.expander("2️⃣ Répartition par commune 🗺️", expanded=False):
-        st.subheader("📍 Analyse par commune individuelle")
+def create_modern_bar_chart(data, x, y, color, title, color_map=None):
+    """Création d'un graphique en barres moderne"""
+    fig = px.bar(
+        data, 
+        x=x, 
+        y=y, 
+        color=color,
+        title=title,
+        color_discrete_map=color_map,
+        text=y
+    )
+    
+    fig.update_traces(
+        texttemplate='%{text:,}',
+        textposition='outside',
+        hovertemplate='<b>%{x}</b><br>%{y:,}<extra></extra>'
+    )
+    
+    fig.update_layout(
+        font=dict(size=12, color='#2c3e50'),
+        title_font=dict(size=18, color='#2c3e50'),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=400,
+        xaxis_title="",
+        yaxis_title="Nombre de personnes",
+        showlegend=True
+    )
+    return fig
 
+def create_stacked_bar_chart(data, x, y, color, title, color_map=None):
+    """Création d'un graphique en barres empilées"""
+    fig = px.bar(
+        data, 
+        x=x, 
+        y=y, 
+        color=color,
+        title=title,
+        color_discrete_map=color_map,
+        barmode='stack'
+    )
+    
+    fig.update_traces(
+        hovertemplate='<b>%{x}</b><br>%{fullData.name}: %{y:,}<extra></extra>'
+    )
+    
+    fig.update_layout(
+        font=dict(size=12, color='#2c3e50'),
+        title_font=dict(size=18, color='#2c3e50'),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=500,
+        xaxis_title="",
+        yaxis_title="Nombre de personnes",
+        xaxis_tickangle=-45,
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.3,
+            xanchor="center",
+            x=0.5
+        )
+    )
+    return fig
+
+def create_area_chart(data, x, y_cols, title, color_map=None):
+    """Création d'un graphique en aires"""
+    fig = px.area(
+        data, 
+        x=x, 
+        y=y_cols,
+        title=title,
+        color_discrete_map=color_map,
+        markers=True
+    )
+    
+    fig.update_traces(
+        hovertemplate='<b>%{x}</b><br>%{fullData.name}: %{y:,}<extra></extra>'
+    )
+    
+    fig.update_layout(
+        font=dict(size=12, color='#2c3e50'),
+        title_font=dict(size=18, color='#2c3e50'),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=400,
+        xaxis_title="Période",
+        yaxis_title="Nombre de personnes",
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.2,
+            xanchor="center",
+            x=0.5
+        )
+    )
+    return fig
+
+def main():
+    # Chargement des données
+    df_genre_trimestre, df_repartition_genre, df_genre_commune = charger_donnees_genre()
+    
+    if df_genre_trimestre is None:
+        st.stop()
+    
+    # Titre principal avec style
+    st.markdown("""
+    <h1 style="text-align: center; color: #2c3e50; margin-bottom: 2rem; font-size: 3rem;">
+        📊 ANALYSE FONCIÈRE GENRE
+    </h1>
+    """, unsafe_allow_html=True)
+    
+    # Sidebar avec filtres
+    st.sidebar.markdown('<div class="filter-header">🔍 FILTRES & NAVIGATION</div>', unsafe_allow_html=True)
+    
+    # Sélection de la vue
+    vue_selectionnee = st.sidebar.selectbox(
+        "📋 Sélectionner une vue",
+        ["Vue d'ensemble", "Analyse par commune", "Analyse par type de parcelle", "Évolution temporelle"],
+        index=0
+    )
+    
+    # Objectif personnalisable
+    objectif_femmes = st.sidebar.slider(
+        "🎯 Objectif % femmes",
+        min_value=10,
+        max_value=50,
+        value=30,
+        step=1
+    )
+    
+    # Calcul des statistiques globales
+    total_femmes = int(df_repartition_genre[df_repartition_genre["Genre"] == "Femme"]["Total_Nombre"].iloc[0])
+    total_hommes = int(df_repartition_genre[df_repartition_genre["Genre"] == "Homme"]["Total_Nombre"].iloc[0])
+    total_general = total_femmes + total_hommes
+    pourcentage_femmes = round((total_femmes / total_general) * 100, 1)
+    ratio_hf = round(total_hommes / total_femmes, 2)
+    
+    # Métriques principales (toujours visibles)
+    st.markdown('<div class="section-header">📈 STATISTIQUES GLOBALES</div>', unsafe_allow_html=True)
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown(create_modern_metric_card("👥 TOTAL PERSONNES", total_general, "metric-card-total"), unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown(create_modern_metric_card("👨 HOMMES", total_hommes, "metric-card-male"), unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown(create_modern_metric_card("👩 FEMMES", total_femmes, "metric-card-female"), unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown(create_modern_metric_card("⚖️ RATIO H/F", ratio_hf, "ratio-card"), unsafe_allow_html=True)
+    
+    # Contenu selon la vue sélectionnée
+    if vue_selectionnee == "Vue d'ensemble":
+        st.markdown('<div class="section-header">🎯 OBJECTIF PARITÉ</div>', unsafe_allow_html=True)
+        
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            fig_gauge = create_gauge_chart(pourcentage_femmes, "Pourcentage de femmes", objectif_femmes)
+            st.plotly_chart(fig_gauge, use_container_width=True)
+        
+        with col2:
+            colors = ['#3498db', '#e91e63']
+            fig_pie = create_modern_pie_chart(
+                df_repartition_genre,
+                names="Genre",
+                values="Total_Nombre",
+                title="Répartition Globale Hommes/Femmes",
+                colors=colors
+            )
+            st.plotly_chart(fig_pie, use_container_width=True)
+    
+    elif vue_selectionnee == "Analyse par commune":
+        st.markdown('<div class="section-header">🗺️ ANALYSE PAR COMMUNE</div>', unsafe_allow_html=True)
+        
+        # Filtre commune
         communes = df_genre_commune["communeSenegal"].unique()
-        commune_selection = st.selectbox("🔍 Choisir une commune", communes)
-
-        df_commune = df_genre_commune[df_genre_commune["communeSenegal"] == commune_selection]
+        commune_selectionnee = st.selectbox("🏘️ Sélectionner une commune", communes)
+        
+        # Données de la commune sélectionnée
+        df_commune = df_genre_commune[df_genre_commune["communeSenegal"] == commune_selectionnee]
         femmes_c = int(df_commune["Femme"].iloc[0])
         hommes_c = int(df_commune["Homme"].iloc[0])
         total_c = femmes_c + hommes_c
-        pourcentage_femmes_c = round((femmes_c / total_c) * 100)
-
-        col1, col2 = st.columns([1, 2])
+        pourcentage_femmes_c = round((femmes_c / total_c) * 100, 1)
+        
+        # Métriques de la commune
+        col1, col2, col3 = st.columns(3)
         with col1:
-            st.write(f"### 📍 {commune_selection}")
-            afficher_jauge_objectif(pourcentage_femmes_c)
-
+            st.metric("👥 Total", f"{total_c:,}")
+        with col2:
+            st.metric("👨 Hommes", f"{hommes_c:,}")
+        with col3:
+            st.metric("👩 Femmes", f"{femmes_c:,}")
+        
+        # Graphiques de la commune
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            fig_gauge_commune = create_gauge_chart(pourcentage_femmes_c, f"% Femmes - {commune_selectionnee}", objectif_femmes)
+            st.plotly_chart(fig_gauge_commune, use_container_width=True)
+        
         with col2:
             df_temp = pd.DataFrame({
-                "Genre": ["Femme", "Homme"],
-                "Nombre": [femmes_c, hommes_c]
+                "Genre": ["Homme", "Femme"],
+                "Nombre": [hommes_c, femmes_c]
             })
-            fig_com = px.pie(
+            fig_pie_commune = create_modern_pie_chart(
                 df_temp,
                 names="Genre",
                 values="Nombre",
-                color="Genre",
-                color_discrete_map={"Femme": "goldenrod", "Homme": "steelblue"},
-                hole=0.3
+                title=f"Répartition - {commune_selectionnee}",
+                colors=['#3498db', '#e91e63']
             )
-            fig_com.update_traces(pull=[0.1, 0], hoverinfo='label+percent+value')
-            st.plotly_chart(fig_com, use_container_width=True)
-
-        st.markdown("---")
-        st.subheader("🌍 Répartition globale par commune")
-
+            st.plotly_chart(fig_pie_commune, use_container_width=True)
+        
+        # Vue globale par commune
+        st.markdown("### 🌍 Vue d'ensemble - Toutes les communes")
         df_long = df_genre_commune.melt(
             id_vars=["communeSenegal"],
             value_vars=["Femme", "Homme"],
             var_name="Genre",
             value_name="Nombre"
         )
-        fig_all_communes = px.bar(
+        
+        fig_communes = create_stacked_bar_chart(
             df_long,
             x="communeSenegal",
             y="Nombre",
             color="Genre",
-            barmode="stack",
-            color_discrete_map={"Femme": "goldenrod", "Homme": "steelblue"}
+            title="Répartition du genre par commune",
+            color_map={"Homme": "#3498db", "Femme": "#e91e63"}
         )
-        fig_all_communes = personnaliser_graphique(fig_all_communes, "Répartition du genre par commune")
-        st.plotly_chart(fig_all_communes, use_container_width=True)
-
-    with st.expander("3️⃣ Répartition par type de parcelle", expanded=False):
-        st.subheader("📌 👫🏿")
-        types = ["Individuel", "Collectif", "Mandataires"]
-        for type_ in types:
-            col_nb = f"{type_}_Nombre"
-            fig = px.bar(
+        st.plotly_chart(fig_communes, use_container_width=True)
+    
+    elif vue_selectionnee == "Analyse par type de parcelle":
+        st.markdown('<div class="section-header">📦 ANALYSE PAR TYPE DE PARCELLE</div>', unsafe_allow_html=True)
+        
+        types_parcelles = ["Individuel", "Collectif", "Mandataires"]
+        type_selectionne = st.selectbox("📋 Sélectionner un type de parcelle", types_parcelles)
+        
+        col_nb = f"{type_selectionne}_Nombre"
+        
+        if col_nb in df_repartition_genre.columns:
+            fig_type = create_modern_bar_chart(
                 df_repartition_genre,
                 x="Genre",
                 y=col_nb,
                 color="Genre",
-                text=col_nb,
-                color_discrete_map={"Femme": "goldenrod", "Homme": "steelblue"}
+                title=f"Répartition par genre - {type_selectionne}",
+                color_map={"Homme": "#3498db", "Femme": "#e91e63"}
             )
-            titre = f"{type_} : Nombre par genre"
-            fig = personnaliser_graphique(fig, titre)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig_type, use_container_width=True)
+            
+            # Affichage des statistiques pour ce type
+            col1, col2 = st.columns(2)
+            with col1:
+                hommes_type = int(df_repartition_genre[df_repartition_genre["Genre"] == "Homme"][col_nb].iloc[0])
+                st.metric("👨 Hommes", f"{hommes_type:,}")
+            with col2:
+                femmes_type = int(df_repartition_genre[df_repartition_genre["Genre"] == "Femme"][col_nb].iloc[0])
+                st.metric("👩 Femmes", f"{femmes_type:,}")
+        
+        # Comparaison de tous les types
+        st.markdown("### 📊 Comparaison tous types")
+        comparison_data = []
+        for type_p in types_parcelles:
+            col_nb = f"{type_p}_Nombre"
+            if col_nb in df_repartition_genre.columns:
+                for _, row in df_repartition_genre.iterrows():
+                    comparison_data.append({
+                        "Type": type_p,
+                        "Genre": row["Genre"],
+                        "Nombre": row[col_nb]
+                    })
+        
+        if comparison_data:
+            df_comparison = pd.DataFrame(comparison_data)
+            fig_comparison = create_stacked_bar_chart(
+                df_comparison,
+                x="Type",
+                y="Nombre",
+                color="Genre",
+                title="Comparaison par type de parcelle",
+                color_map={"Homme": "#3498db", "Femme": "#e91e63"}
+            )
+            st.plotly_chart(fig_comparison, use_container_width=True)
+    
+    elif vue_selectionnee == "Évolution temporelle":
+        st.markdown('<div class="section-header">📅 ÉVOLUTION TEMPORELLE</div>', unsafe_allow_html=True)
+        
+        if "PeriodeTrimestrielle" in df_genre_trimestre.columns:
+            # Graphique d'évolution
+            fig_evol = create_area_chart(
+                df_genre_trimestre,
+                x="PeriodeTrimestrielle",
+                y_cols=["Femme", "Homme"],
+                title="Évolution trimestrielle par genre",
+                color_map={"Homme": "#3498db", "Femme": "#e91e63"}
+            )
+            st.plotly_chart(fig_evol, use_container_width=True)
+            
+            # Tableau de données
+            st.markdown("### 📋 Données détaillées")
+            st.dataframe(df_genre_trimestre, use_container_width=True)
+    
+    # Footer
+    st.markdown("---")
+    st.markdown("""
+    <div style="text-align: center; color: #7f8c8d; margin-top: 2rem;">
+        <p>📊 Dashboard Analyse Foncière Genre | Développé avec Streamlit & Plotly</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    with st.expander("4️⃣ Évolution trimestrielle 📆", expanded=False):
-        fig_evol = px.area(
-            df_genre_trimestre,
-            x="PeriodeTrimestrielle",
-            y=["Femme", "Homme"],
-            labels={"value": "Nombre", "variable": "Genre"},
-            color_discrete_map={"Femme": "goldenrod", "Homme": "steelblue"},
-            markers=True
-        )
-        fig_evol = personnaliser_graphique(fig_evol, "📈 Évolution trimestrielle 🔵🟡")
-        st.plotly_chart(fig_evol, use_container_width=True)
-
-# Appel principal
 if __name__ == "__main__":
-    afficher_repartition_genre()
+    main()
