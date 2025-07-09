@@ -11,12 +11,11 @@ def afficher_etat_avancement(df_etapes=None):
     Fonction principale pour afficher l'onglet État d'avancement des communes
     avec un design modernisé et des animations
     """
-    # CSS personnalisé pour le design moderne
+    # CSS personnalisé pour le design moderne (bleu - or)
     st.markdown("""
     <style>
-    /* Style général */
     .main-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #3498db 0%, #f39c12 100%);
         color: white;
         padding: 2rem;
         border-radius: 15px;
@@ -25,43 +24,36 @@ def afficher_etat_avancement(df_etapes=None):
         box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         animation: slideDown 0.8s ease-out;
     }
-    
     @keyframes slideDown {
         from { transform: translateY(-50px); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
     }
-    
     .metric-card {
         background: white;
         padding: 1.5rem;
         border-radius: 15px;
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        border-left: 4px solid #667eea;
+        border-left: 4px solid #3498db;
         margin-bottom: 1rem;
         transition: all 0.3s ease;
         animation: fadeInUp 0.6s ease-out;
     }
-    
     .metric-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 15px 35px rgba(0,0,0,0.15);
     }
-    
     @keyframes fadeInUp {
         from { transform: translateY(20px); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
     }
-    
     .progress-ring {
         transform: rotate(-90deg);
         animation: rotate 2s ease-in-out;
     }
-    
     @keyframes rotate {
         from { transform: rotate(-90deg) scale(0.8); }
         to { transform: rotate(-90deg) scale(1); }
     }
-    
     .legend-item {
         display: flex;
         align-items: center;
@@ -71,19 +63,16 @@ def afficher_etat_avancement(df_etapes=None):
         transition: all 0.3s ease;
         animation: fadeIn 0.8s ease-out;
     }
-    
     .legend-item:hover {
-        background: rgba(102, 126, 234, 0.1);
+        background: rgba(243, 156, 18, 0.1);
         transform: translateX(5px);
     }
-    
     @keyframes fadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
     }
-    
     .section-header {
-        background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+        background: linear-gradient(45deg, #3498db 0%, #f39c12 100%);
         color: white;
         padding: 1rem;
         border-radius: 10px;
@@ -91,13 +80,11 @@ def afficher_etat_avancement(df_etapes=None):
         text-align: center;
         animation: pulse 2s infinite;
     }
-    
     @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(240, 147, 251, 0.4); }
-        70% { box-shadow: 0 0 0 10px rgba(240, 147, 251, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(240, 147, 251, 0); }
+        0% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(243, 156, 18, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0); }
     }
-    
     .status-badge {
         padding: 0.3rem 0.8rem;
         border-radius: 20px;
@@ -106,14 +93,12 @@ def afficher_etat_avancement(df_etapes=None):
         margin: 0.2rem;
         animation: bounceIn 0.5s ease-out;
     }
-    
     @keyframes bounceIn {
         0% { transform: scale(0.3); opacity: 0; }
         50% { transform: scale(1.05); }
         70% { transform: scale(0.9); }
         100% { transform: scale(1); opacity: 1; }
     }
-    
     .glass-card {
         background: rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
@@ -123,22 +108,19 @@ def afficher_etat_avancement(df_etapes=None):
         margin: 1rem 0;
         animation: slideInRight 0.6s ease-out;
     }
-    
     @keyframes slideInRight {
         from { transform: translateX(50px); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
     }
-    
     .loading-spinner {
         border: 4px solid #f3f3f3;
-        border-top: 4px solid #667eea;
+        border-top: 4px solid #3498db;
         border-radius: 50%;
         width: 40px;
         height: 40px;
         animation: spin 1s linear infinite;
         margin: 20px auto;
     }
-    
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
@@ -146,32 +128,25 @@ def afficher_etat_avancement(df_etapes=None):
     </style>
     """, unsafe_allow_html=True)
 
-    # En-tête principal avec animation
+    # En-tête principal
     st.markdown("""
     <div class="main-header">
-        <h1>📅 État d'avancement des communes</h1>
+        <h1>🗕️ État d'avancement des communes</h1>
         <p>Tableau de bord interactif pour le suivi des opérations foncières</p>
     </div>
     """, unsafe_allow_html=True)
 
-    # Simulation de chargement avec spinner
     with st.spinner("🔄 Chargement des données..."):
-        time.sleep(0.5)  # Simulation du temps de chargement
-        
-        # Chargement des données
+        time.sleep(0.5)
         if df_etapes is None:
             df_etapes = charger_donnees_etapes()
         else:
             if "Progrès (%)" not in df_etapes.columns:
                 df_etapes["Progrès (%)"] = df_etapes["Progrès des étapes"].apply(evaluer_progres)
 
-    # Interface de filtrage modernisée
     region_sel, commune_sel, csig_sel, df_etapes_filtre = filtrer_donnees_moderne(df_etapes)
-
-    # Afficher la légende modernisée
     afficher_legende_moderne()
 
-    # Afficher le contenu selon les filtres
     if region_sel == "Toutes" and commune_sel == "Toutes" and csig_sel == "Tous":
         afficher_vue_globale_moderne(df_etapes)
     elif region_sel != "Toutes" and commune_sel == "Toutes" and csig_sel == "Tous":
