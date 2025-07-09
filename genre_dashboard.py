@@ -5,14 +5,6 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
 
-# Configuration de la page
-st.set_page_config(
-    page_title="Analyse Genre - Dashboard",
-    page_icon="👫",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
 # CSS personnalisé pour un look moderne
 st.markdown("""
 <style>
@@ -56,15 +48,6 @@ st.markdown("""
     
     .ratio-card {
         background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-    }
-    
-    .sidebar .sidebar-content {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .stSelectbox > div > div {
-        background-color: #f8f9fa;
-        border-radius: 10px;
     }
     
     .filter-header {
@@ -290,44 +273,48 @@ def create_area_chart(data, x, y_cols, title, color_map=None):
     )
     return fig
 
-def main():
+def afficher_repartition_genre():
+    """Fonction principale pour afficher l'analyse genre (appelée depuis dashboard.py)"""
+    
     # Chargement des données
     df_genre_trimestre, df_repartition_genre, df_genre_commune = charger_donnees_genre()
     
     if df_genre_trimestre is None or df_repartition_genre is None or df_genre_commune is None:
-        st.stop()
+        st.error("🚨 Impossible de charger les données de genre")
+        st.info("Veuillez vous assurer que les fichiers Excel sont présents dans le dossier 'genre/'")
+        return
     
     # Titre principal avec style
     st.markdown("""
-    <h1 style="text-align: center; color: #2c3e50; margin-bottom: 2rem; font-size: 3rem;">
-        📊 ANALYSE FONCIÈRE GENRE
-    </h1>
+    <h2 style="color: #f39c12; text-align: center; margin-bottom: 2rem;">
+        👫 Analyse de la Répartition par Genre
+    </h2>
     """, unsafe_allow_html=True)
     
-    # Sidebar avec filtres
-    st.sidebar.markdown('<div class="filter-header">🔍 FILTRES & NAVIGATION</div>', unsafe_allow_html=True)
-    
     # Sélection de la vue
-    vue_selectionnee = st.sidebar.selectbox(
+    vue_selectionnee = st.selectbox(
         "📋 Sélectionner une vue",
         ["Vue d'ensemble", "Analyse par commune", "Analyse par type de parcelle", "Évolution temporelle"],
-        index=0
+        key="vue_genre"
     )
     
     # Objectif personnalisable
-    objectif_femmes = st.sidebar.slider(
-        "🎯 Objectif % femmes",
-        min_value=10,
-        max_value=50,
-        value=30,
-        step=1
-    )
+    col1, col2 = st.columns([2, 1])
+    with col2:
+        objectif_femmes = st.slider(
+            "🎯 Objectif % femmes",
+            min_value=10,
+            max_value=50,
+            value=30,
+            step=1,
+            key="objectif_genre"
+        )
     
     # Vérification des colonnes nécessaires
     if "Total_Nombre" not in df_repartition_genre.columns:
         st.error("La colonne 'Total_Nombre' n'existe pas dans les données de répartition")
         st.info("Colonnes disponibles: " + str(list(df_repartition_genre.columns)))
-        st.stop()
+        return
     
     # Calcul des statistiques globales
     try:
@@ -339,7 +326,7 @@ def main():
     except (IndexError, KeyError) as e:
         st.error(f"Erreur lors du calcul des statistiques: {e}")
         st.info("Vérifiez que les données contiennent bien les genres 'Femme' et 'Homme'")
-        st.stop()
+        return
     
     # Métriques principales (toujours visibles)
     st.markdown('<div class="section-header">📈 STATISTIQUES GLOBALES</div>', unsafe_allow_html=True)
@@ -386,7 +373,7 @@ def main():
         if "communeSenegal" not in df_genre_commune.columns:
             st.error("La colonne 'communeSenegal' n'existe pas dans les données par commune")
             st.info("Colonnes disponibles: " + str(list(df_genre_commune.columns)))
-            st.stop()
+            return
         
         # Filtre commune
         communes = df_genre_commune["communeSenegal"].unique()
@@ -397,7 +384,7 @@ def main():
         
         if df_commune.empty:
             st.error(f"Aucune donnée trouvée pour la commune: {commune_selectionnee}")
-            st.stop()
+            return
         
         try:
             femmes_c = int(df_commune["Femme"].iloc[0])
@@ -407,7 +394,7 @@ def main():
         except (KeyError, IndexError) as e:
             st.error(f"Erreur lors du calcul des statistiques pour la commune: {e}")
             st.info("Vérifiez que les colonnes 'Femme' et 'Homme' existent dans les données")
-            st.stop()
+            return
         
         # Métriques de la commune
         col1, col2, col3 = st.columns(3)
@@ -522,7 +509,7 @@ def main():
             if "Femme" not in df_genre_trimestre.columns or "Homme" not in df_genre_trimestre.columns:
                 st.error("Les colonnes 'Femme' et 'Homme' n'existent pas dans les données trimestrielles")
                 st.info("Colonnes disponibles: " + str(list(df_genre_trimestre.columns)))
-                st.stop()
+                return
             
             # Graphique d'évolution
             fig_evol = create_area_chart(
@@ -540,12 +527,25 @@ def main():
         else:
             st.error("La colonne 'PeriodeTrimestrielle' n'existe pas dans les données")
             st.info("Colonnes disponibles: " + str(list(df_genre_trimestre.columns)))
+
+# Fonction principale pour exécution standalone (optionnelle)
+def main():
+    """Fonction principale pour exécution standalone"""
+    st.set_page_config(
+        page_title="Analyse Genre - Dashboard",
+        page_icon="👫",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+    
+    st.title("📊 ANALYSE FONCIÈRE GENRE")
+    afficher_repartition_genre()
     
     # Footer
     st.markdown("---")
     st.markdown("""
     <div style="text-align: center; color: #7f8c8d; margin-top: 2rem;">
-        <p>📊 Dashboard Analyse Foncière Genre | Développé avec Streamlit & Plotly</p>
+        <p>📊 Dashboard Analyse Foncière Genre | PROCASEF Boundou</p>
     </div>
     """, unsafe_allow_html=True)
 
