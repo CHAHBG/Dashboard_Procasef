@@ -2,39 +2,182 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import time
 
 
 def afficher_etat_avancement(df_etapes=None):
     """
     Fonction principale pour afficher l'onglet État d'avancement des communes
-
-    Args:
-        df_etapes: DataFrame optionnel contenant les données d'avancement.
-                  Si None, les données seront chargées depuis le fichier Excel.
+    avec un design modernisé et des animations
     """
-    st.header("📅 État d'avancement des communes")
+    # CSS personnalisé pour le design moderne
+    st.markdown("""
+    <style>
+    /* Style général */
+    .main-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        animation: slideDown 0.8s ease-out;
+    }
+    
+    @keyframes slideDown {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .metric-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border-left: 4px solid #667eea;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    }
+    
+    @keyframes fadeInUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .progress-ring {
+        transform: rotate(-90deg);
+        animation: rotate 2s ease-in-out;
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(-90deg) scale(0.8); }
+        to { transform: rotate(-90deg) scale(1); }
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        margin: 0.3rem 0;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        animation: fadeIn 0.8s ease-out;
+    }
+    
+    .legend-item:hover {
+        background: rgba(102, 126, 234, 0.1);
+        transform: translateX(5px);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .section-header {
+        background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        text-align: center;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(240, 147, 251, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(240, 147, 251, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(240, 147, 251, 0); }
+    }
+    
+    .status-badge {
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        margin: 0.2rem;
+        animation: bounceIn 0.5s ease-out;
+    }
+    
+    @keyframes bounceIn {
+        0% { transform: scale(0.3); opacity: 0; }
+        50% { transform: scale(1.05); }
+        70% { transform: scale(0.9); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        animation: slideInRight 0.6s ease-out;
+    }
+    
+    @keyframes slideInRight {
+        from { transform: translateX(50px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .loading-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-    # Chargement des données si non fournies
-    if df_etapes is None:
-        df_etapes = charger_donnees_etapes()
-    else:
-        # S'assurer que les calculs de progrès sont effectués sur les données fournies
-        if "Progrès (%)" not in df_etapes.columns:
-            df_etapes["Progrès (%)"] = df_etapes["Progrès des étapes"].apply(evaluer_progres)
+    # En-tête principal avec animation
+    st.markdown("""
+    <div class="main-header">
+        <h1>📅 État d'avancement des communes</h1>
+        <p>Tableau de bord interactif pour le suivi des opérations foncières</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # Interface de filtrage
-    region_sel, commune_sel, csig_sel, df_etapes_filtre = filtrer_donnees(df_etapes)
+    # Simulation de chargement avec spinner
+    with st.spinner("🔄 Chargement des données..."):
+        time.sleep(0.5)  # Simulation du temps de chargement
+        
+        # Chargement des données
+        if df_etapes is None:
+            df_etapes = charger_donnees_etapes()
+        else:
+            if "Progrès (%)" not in df_etapes.columns:
+                df_etapes["Progrès (%)"] = df_etapes["Progrès des étapes"].apply(evaluer_progres)
 
-    # Afficher la légende
-    afficher_legende()
+    # Interface de filtrage modernisée
+    region_sel, commune_sel, csig_sel, df_etapes_filtre = filtrer_donnees_moderne(df_etapes)
 
-    # Afficher le contenu approprié selon les filtres
+    # Afficher la légende modernisée
+    afficher_legende_moderne()
+
+    # Afficher le contenu selon les filtres
     if region_sel == "Toutes" and commune_sel == "Toutes" and csig_sel == "Tous":
-        afficher_vue_globale(df_etapes)
+        afficher_vue_globale_moderne(df_etapes)
     elif region_sel != "Toutes" and commune_sel == "Toutes" and csig_sel == "Tous":
-        afficher_vue_region(df_etapes_filtre, region_sel)
+        afficher_vue_region_moderne(df_etapes_filtre, region_sel)
     else:
-        afficher_details_communes(df_etapes_filtre)
+        afficher_details_communes_moderne(df_etapes_filtre)
 
 
 @st.cache_data
@@ -45,10 +188,7 @@ def charger_donnees_etapes():
     try:
         df_etapes = pd.read_excel("data/Etat des opérations Boundou-Mai 2025.xlsx", engine="openpyxl")
         df_etapes.fillna("", inplace=True)
-
-        # Calcul du progrès en pourcentage
         df_etapes["Progrès (%)"] = df_etapes["Progrès des étapes"].apply(evaluer_progres)
-
         return df_etapes
     except FileNotFoundError:
         st.error("Le fichier 'data/Etat des opérations Boundou-Mai 2025.xlsx' n'a pas été trouvé.")
@@ -62,16 +202,13 @@ def evaluer_progres(etapes):
     """
     Évalue le progrès d'une commune basé sur les étapes décrites
     """
-    # Handle None, NaN, or non-string values
     if etapes is None or pd.isna(etapes) or not isinstance(etapes, str):
         return 0.0
     
-    # Handle empty string
     if etapes.strip() == "":
         return 0.0
     
-    # Considère une étape débutée même si elle n'est pas encore complétée
-    total = 4  # 4 étapes clés
+    total = 4
     score = 0
     
     try:
@@ -81,429 +218,425 @@ def evaluer_progres(etapes):
             if "complét" in etape or "affichage public (complétés)" in etape:
                 score += 1
             elif "en cours" in etape or "débuté" in etape or "commencé" in etape:
-                score += 0.5  # Attribuer un demi-point pour les étapes en cours
+                score += 0.5
         
         return (score / total) * 100
     
     except Exception as e:
-        # Log the error for debugging (optional)
         print(f"Error processing etapes: {etapes}, Error: {e}")
         return 0.0
 
 
-def filtrer_donnees(df_etapes):
+def filtrer_donnees_moderne(df_etapes):
     """
-    Filtre les données selon les sélections de l'utilisateur
+    Interface de filtrage modernisée avec animations
     """
     if df_etapes.empty:
         return "Toutes", "Toutes", "Tous", df_etapes
     
-    # Vérifier si les colonnes existent
-    if "Région" not in df_etapes.columns:
-        st.error("La colonne 'Région' n'existe pas dans les données.")
-        return "Toutes", "Toutes", "Tous", df_etapes
+    st.markdown('<div class="section-header"><h3>🎯 Filtres de sélection</h3></div>', unsafe_allow_html=True)
     
-    regions = ["Toutes"] + sorted(df_etapes["Région"].dropna().unique())
-    region_sel = st.selectbox("🌍 Choisir une région :", regions)
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if "Région" in df_etapes.columns:
+            regions = ["Toutes"] + sorted(df_etapes["Région"].dropna().unique())
+            region_sel = st.selectbox("🌍 Région", regions, key="region_filter")
+        else:
+            st.error("Colonne 'Région' manquante")
+            region_sel = "Toutes"
+    
     df_etapes_filtre = df_etapes if region_sel == "Toutes" else df_etapes[df_etapes["Région"] == region_sel]
-
-    if "Commune" not in df_etapes.columns:
-        st.error("La colonne 'Commune' n'existe pas dans les données.")
-        return region_sel, "Toutes", "Tous", df_etapes_filtre
     
-    commune_sel = st.selectbox("🏘️ Choisir une commune :",
-                               ["Toutes"] + sorted(df_etapes_filtre["Commune"].unique()))
+    with col2:
+        if "Commune" in df_etapes.columns:
+            communes = ["Toutes"] + sorted(df_etapes_filtre["Commune"].unique())
+            commune_sel = st.selectbox("🏘️ Commune", communes, key="commune_filter")
+        else:
+            st.error("Colonne 'Commune' manquante")
+            commune_sel = "Toutes"
+    
     df_etapes_filtre = df_etapes_filtre if commune_sel == "Toutes" else df_etapes_filtre[
         df_etapes_filtre["Commune"] == commune_sel]
-
-    if "CSIG" not in df_etapes.columns:
-        st.error("La colonne 'CSIG' n'existe pas dans les données.")
-        return region_sel, commune_sel, "Tous", df_etapes_filtre
     
-    csig_sel = st.selectbox("📌 Choisir un CSIG :",
-                            ["Tous"] + sorted(df_etapes_filtre["CSIG"].unique()))
+    with col3:
+        if "CSIG" in df_etapes.columns:
+            csigs = ["Tous"] + sorted(df_etapes_filtre["CSIG"].unique())
+            csig_sel = st.selectbox("📌 CSIG", csigs, key="csig_filter")
+        else:
+            st.error("Colonne 'CSIG' manquante")
+            csig_sel = "Tous"
+    
     df_etapes_filtre = df_etapes_filtre if csig_sel == "Tous" else df_etapes_filtre[
         df_etapes_filtre["CSIG"] == csig_sel]
 
     return region_sel, commune_sel, csig_sel, df_etapes_filtre
 
 
-def afficher_legende():
+def afficher_legende_moderne():
     """
-    Affiche la légende des indicateurs d'avancement
+    Affiche une légende modernisée avec animations
     """
-    st.write("""
-    ## Légende des indicateurs d'avancement:
-    """)
+    st.markdown('<div class="section-header"><h3>🎨 Légende des indicateurs</h3></div>', unsafe_allow_html=True)
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    legendes = [
+        ("🔴", "0-25%", "Non commencé", "#FF6B6B"),
+        ("🟠", "25-50%", "En cours", "#FF9500"),
+        ("🟡", "50-75%", "En cours avancé", "#FFD93D"),
+        ("🟢", "75-100%", "Près de la fin", "#6BCF7F")
+    ]
+    
+    for i, (icon, range_val, status, color) in enumerate(legendes):
+        with [col1, col2, col3, col4][i]:
+            st.markdown(f"""
+            <div class="legend-item" style="background: linear-gradient(45deg, {color}20, {color}10);">
+                <span style="font-size: 1.5rem; margin-right: 0.5rem;">{icon}</span>
+                <div>
+                    <strong>{range_val}</strong><br>
+                    <small>{status}</small>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
-    col_leg1, col_leg2, col_leg3, col_leg4 = st.columns(4)
-    with col_leg1:
-        st.markdown("🔴 **0-25%** : Non commencé")
-    with col_leg2:
-        st.markdown("🟠 **25-50%** : En cours")
-    with col_leg3:
-        st.markdown("🟡 **50-75%** : En cours avancé")
-    with col_leg4:
-        st.markdown("🟢 **75-100%** : Près de la fin")
 
-    st.markdown("---")
-
-
-def afficher_vue_globale(df_etapes):
+def afficher_vue_globale_moderne(df_etapes):
     """
-    Affiche la vue globale de l'avancement du projet
+    Affiche une vue globale modernisée avec animations
     """
-    st.subheader("📊 Vue globale de l'avancement du projet")
+    st.markdown('<div class="section-header"><h2>📊 Tableau de bord global</h2></div>', unsafe_allow_html=True)
 
     if df_etapes.empty:
-        st.warning("Aucune donnée disponible pour afficher la vue globale.")
+        st.warning("Aucune donnée disponible")
         return
 
-    # Calculer le nombre de communes débutées
+    # Calculer les statistiques
     communes_debutees = df_etapes[df_etapes["Progrès (%)"] > 0]
     pourcentage_debutees = (len(communes_debutees) / len(df_etapes)) * 100 if len(df_etapes) > 0 else 0
+    progres_moyen = df_etapes["Progrès (%)"].mean()
 
-    # Statistiques globales
-    col1, col2, col3 = st.columns(3)
+    # Cartes métriques modernisées
+    col1, col2, col3, col4 = st.columns(4)
+    
+    metrics = [
+        ("📍", "Total communes", len(df_etapes), "#667eea"),
+        ("🚀", "Communes débutées", len(communes_debutees), "#f093fb"),
+        ("📊", "Taux de démarrage", f"{pourcentage_debutees:.1f}%", "#4ecdc4"),
+        ("⭐", "Progrès moyen", f"{progres_moyen:.1f}%", "#45b7d1")
+    ]
+    
+    for i, (icon, title, value, color) in enumerate(metrics):
+        with [col1, col2, col3, col4][i]:
+            st.markdown(f"""
+            <div class="metric-card" style="border-left-color: {color}; animation-delay: {i*0.2}s;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <h4 style="margin: 0; color: {color};">{title}</h4>
+                        <h2 style="margin: 0.5rem 0; color: #2c3e50;">{value}</h2>
+                    </div>
+                    <div style="font-size: 2rem; opacity: 0.7;">{icon}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # Graphiques avec animations
+    afficher_graphiques_modernises(df_etapes)
+
+
+def afficher_graphiques_modernises(df_etapes):
+    """
+    Affiche des graphiques modernisés avec animations
+    """
+    col1, col2 = st.columns(2)
+    
     with col1:
-        st.metric("Nombre total de communes", len(df_etapes))
+        # Graphique d'avancement par région
+        if "Région" in df_etapes.columns:
+            region_progress = df_etapes.groupby("Région")["Progrès (%)"].mean().reset_index()
+            
+            fig_regions = px.bar(
+                region_progress,
+                x="Région",
+                y="Progrès (%)",
+                title="🌍 Progression par région",
+                color="Progrès (%)",
+                color_continuous_scale=["#FF6B6B", "#FF9500", "#FFD93D", "#6BCF7F"],
+                template="plotly_white"
+            )
+            
+            fig_regions.update_layout(
+                height=400,
+                title_font_size=16,
+                title_x=0.5,
+                showlegend=False,
+                xaxis_title="Région",
+                yaxis_title="Progrès (%)",
+                yaxis=dict(range=[0, 100])
+            )
+            
+            fig_regions.update_traces(
+                hovertemplate="<b>%{x}</b><br>Progrès: %{y:.1f}%<extra></extra>",
+                texttemplate="%{y:.1f}%",
+                textposition="outside"
+            )
+            
+            st.plotly_chart(fig_regions, use_container_width=True)
+    
     with col2:
-        st.metric("Communes ayant débuté", len(communes_debutees))
+        # Graphique en secteurs modernisé
+        df_etapes["Catégorie"] = pd.cut(
+            df_etapes["Progrès (%)"],
+            bins=[0, 0.1, 25, 50, 75, 100],
+            labels=["Non débutées", "Débutées", "En cours", "Avancées", "Terminées"]
+        )
+        
+        resume = df_etapes["Catégorie"].value_counts().reset_index()
+        resume.columns = ["État", "Nombre"]
+        
+        fig_pie = px.pie(
+            resume,
+            values="Nombre",
+            names="État",
+            title="📈 Répartition des états",
+            color_discrete_map={
+                "Non débutées": "#FF6B6B",
+                "Débutées": "#FF9500",
+                "En cours": "#FFD93D",
+                "Avancées": "#6BCF7F",
+                "Terminées": "#4ECDC4"
+            },
+            template="plotly_white"
+        )
+        
+        fig_pie.update_layout(
+            height=400,
+            title_font_size=16,
+            title_x=0.5
+        )
+        
+        fig_pie.update_traces(
+            textposition="inside",
+            textinfo="percent+label",
+            hovertemplate="<b>%{label}</b><br>Nombre: %{value}<br>Pourcentage: %{percent}<extra></extra>"
+        )
+        
+        st.plotly_chart(fig_pie, use_container_width=True)
+
+
+def afficher_vue_region_moderne(df_etapes_filtre, region_sel):
+    """
+    Affiche une vue région modernisée
+    """
+    st.markdown(f'<div class="section-header"><h2>🌍 Région: {region_sel}</h2></div>', unsafe_allow_html=True)
+
+    if df_etapes_filtre.empty:
+        st.warning(f"Aucune donnée pour la région {region_sel}")
+        return
+
+    # Statistiques de la région
+    communes_region = len(df_etapes_filtre)
+    communes_debutees = len(df_etapes_filtre[df_etapes_filtre["Progrès (%)"] > 0])
+    progres_moyen = df_etapes_filtre["Progrès (%)"].mean()
+
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric("🏘️ Communes", communes_region)
+    with col2:
+        st.metric("🚀 Débutées", communes_debutees)
     with col3:
-        st.metric("Pourcentage de démarrage", f"{pourcentage_debutees:.1f}%")
+        st.metric("📊 Progrès moyen", f"{progres_moyen:.1f}%")
 
-    # Pour diagnostic: Afficher les détails des communes débutées
-    if len(communes_debutees) > 0:
-        with st.expander("Détails des communes débutées (diagnostic)", expanded=False):
-            st.dataframe(communes_debutees[["Commune", "Progrès (%)", "Progrès des étapes"]],
-                         use_container_width=True)
-
-    # Graphique d'avancement par région
-    afficher_avancement_regions(df_etapes)
-
-    # Résumé des communes par état d'avancement
-    afficher_resume_etat_avancement(df_etapes)
+    # Tableau des communes avec design moderne
+    afficher_tableau_moderne(df_etapes_filtre, region_sel)
 
 
-def afficher_avancement_regions(df_etapes):
+def afficher_tableau_moderne(df_etapes_filtre, region_sel):
     """
-    Affiche le graphique d'avancement moyen par région
+    Affiche un tableau modernisé des communes
     """
-    st.subheader("📈 Avancement moyen par région")
-
-    if df_etapes.empty or "Région" not in df_etapes.columns:
-        st.warning("Pas de données disponibles pour afficher l'avancement par région.")
-        return
-
-    # Calculer la moyenne de progression par région
-    region_progress = df_etapes.groupby("Région")["Progrès (%)"].mean().reset_index()
-
-    if region_progress.empty:
-        st.warning("Aucune donnée de progression par région disponible.")
-        return
-
-    # Créer un graphique à barres pour les régions
-    fig_regions_bar = px.bar(
-        region_progress,
-        x="Région",
-        y="Progrès (%)",
-        title="Progression moyenne par région",
-        color="Progrès (%)",
-        color_continuous_scale=["red", "orange", "gold", "green"],
-        range_color=[0, 100]
-    )
-
-    fig_regions_bar.update_layout(
-        height=400,
-        xaxis_title="Région",
-        yaxis_title="Progrès moyen (%)",
-        yaxis=dict(range=[0, 100])
-    )
-
-    st.plotly_chart(fig_regions_bar, use_container_width=True, key="regions_bar_chart")
-
-
-def afficher_resume_etat_avancement(df_etapes):
-    """
-    Affiche le résumé des communes par état d'avancement
-    """
-    st.subheader("🔍 Résumé des communes par état d'avancement")
-
-    if df_etapes.empty:
-        st.warning("Aucune donnée disponible pour le résumé d'état d'avancement.")
-        return
-
-    # Catégoriser les communes par leur état d'avancement
-    df_etapes["Catégorie"] = pd.cut(
-        df_etapes["Progrès (%)"],
-        bins=[0, 0.1, 25, 50, 75, 100],
-        labels=["Non débutées", "Débutées (<25%)", "En cours (25-50%)",
-                "Avancées (50-75%)", "Presque terminées (>75%)"]
-    )
-
-    resume = df_etapes["Catégorie"].value_counts().reset_index()
-    resume.columns = ["État d'avancement", "Nombre de communes"]
-
-    if resume.empty:
-        st.warning("Aucune donnée de catégorisation disponible.")
-        return
-
-    fig_resume = px.pie(
+    colonnes = ["Commune", "CSIG", "Progrès (%)"]
+    if "Date Début" in df_etapes_filtre.columns:
+        colonnes.append("Date Début")
+    
+    resume = df_etapes_filtre[colonnes].copy()
+    resume["État"] = resume["Progrès (%)"].apply(get_progress_indicator_moderne)
+    resume = resume.sort_values("Progrès (%)", ascending=False)
+    
+    st.dataframe(
         resume,
-        values="Nombre de communes",
-        names="État d'avancement",
-        title="Répartition des communes par état d'avancement",
-        color="État d'avancement",
-        color_discrete_map={
-            "Non débutées": "lightgray",
-            "Débutées (<25%)": "red",
-            "En cours (25-50%)": "orange",
-            "Avancées (50-75%)": "gold",
-            "Presque terminées (>75%)": "green"
+        use_container_width=True,
+        height=400,
+        column_config={
+            "Progrès (%)": st.column_config.ProgressColumn(
+                "Progrès",
+                help="Pourcentage d'avancement",
+                format="%.1f%%",
+                min_value=0,
+                max_value=100,
+            ),
+            "État": st.column_config.TextColumn(
+                "État",
+                help="État d'avancement",
+                width="medium",
+            )
         }
     )
 
-    st.plotly_chart(fig_resume, use_container_width=True, key="resume_pie_chart")
 
-
-def afficher_vue_region(df_etapes_filtre, region_sel):
+def get_progress_indicator_moderne(progress):
     """
-    Affiche la vue d'ensemble pour une région spécifique
-    """
-    st.subheader(f"📊 Vue d'ensemble pour la région: {region_sel}")
-
-    if df_etapes_filtre.empty:
-        st.warning(f"Aucune donnée disponible pour la région {region_sel}.")
-        return
-
-    # Statistiques pour la région
-    communes_region = len(df_etapes_filtre)
-    communes_debutees_region = len(df_etapes_filtre[df_etapes_filtre["Progrès (%)"] > 0])
-    progres_moyen_region = df_etapes_filtre["Progrès (%)"].mean()
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Communes dans la région", communes_region)
-    with col2:
-        st.metric("Communes ayant débuté", communes_debutees_region)
-    with col3:
-        st.metric("Progrès moyen", f"{progres_moyen_region:.1f}%")
-
-    # Tableau récapitulatif des communes de la région
-    afficher_tableau_communes_region(df_etapes_filtre, region_sel)
-
-
-def afficher_tableau_communes_region(df_etapes_filtre, region_sel):
-    """
-    Affiche le tableau récapitulatif des communes d'une région
-    """
-    st.subheader(f"🏘️ Résumé des communes de {region_sel}")
-
-    if df_etapes_filtre.empty:
-        st.warning(f"Aucune commune trouvée pour la région {region_sel}.")
-        return
-
-    # Créer un tableau synthétique des communes
-    colonnes_necessaires = ["Commune", "CSIG", "Progrès (%)"]
-    if "Date Début" in df_etapes_filtre.columns:
-        colonnes_necessaires.append("Date Début")
-    
-    resume_communes = df_etapes_filtre[colonnes_necessaires].copy()
-
-    # Ajouter une colonne pour l'indicateur visuel
-    resume_communes["État"] = resume_communes["Progrès (%)"].apply(get_progress_indicator)
-
-    # Trier par progrès décroissant
-    resume_communes = resume_communes.sort_values(by="Progrès (%)", ascending=False)
-
-    st.dataframe(resume_communes, use_container_width=True)
-
-    # Graphique à barres pour visualiser l'avancement des communes
-    fig_communes = px.bar(
-        resume_communes.sort_values(by="Progrès (%)", ascending=True),
-        y="Commune",
-        x="Progrès (%)",
-        orientation="h",
-        color="Progrès (%)",
-        color_continuous_scale=["red", "orange", "gold", "green"],
-        title=f"Avancement des communes de {region_sel}",
-        range_color=[0, 100]
-    )
-
-    fig_communes.update_layout(
-        height=max(400, len(resume_communes) * 30),  # Adapter la hauteur au nombre de communes
-        xaxis=dict(range=[0, 100])
-    )
-
-    st.plotly_chart(fig_communes, use_container_width=True, key=f"communes_bar_{region_sel}")
-
-
-def get_progress_indicator(progress):
-    """
-    Retourne l'indicateur visuel selon le niveau de progrès
+    Retourne un indicateur moderne du progrès
     """
     if progress < 0.1:
-        return "⚪ Non débuté"
+        return "🔴 Non débuté"
     elif progress < 25:
-        return "🔴 Débuté"
+        return "🟠 Débuté"
     elif progress < 50:
-        return "🟠 En cours"
+        return "🟡 En cours"
     elif progress < 75:
-        return "🟡 Avancé"
+        return "🟢 Avancé"
     else:
-        return "🟢 Près de la fin"
+        return "✅ Terminé"
 
 
-def afficher_details_communes(df_etapes_filtre):
+def afficher_details_communes_moderne(df_etapes_filtre):
     """
-    Affiche les détails pour chaque commune filtrée
+    Affiche les détails des communes avec un design moderne
     """
-    # Si aucune commune trouvée après filtrage
     if len(df_etapes_filtre) == 0:
-        st.warning("Aucune commune ne correspond aux critères de filtrage sélectionnés.")
+        st.warning("Aucune commune trouvée")
         return
 
-    # Parcourir et afficher les données de chaque commune filtrée
     for idx, row in df_etapes_filtre.iterrows():
         progress = row["Progrès (%)"]
-
-        # Détermination des couleurs selon le niveau d'avancement
-        color, steps, threshold_color = determiner_parametres_jauge(progress)
-
-        st.subheader(f"Avancement pour {row['Commune']} - CSIG : {row['CSIG']}")
-
-        # Créer deux colonnes pour afficher la jauge et les informations
-        col1, col2 = st.columns([1, 2])
-
-        with col1:
-            # Utiliser l'indice de la ligne comme partie de la clé unique
-            afficher_jauge_progres(progress, color, steps, f"gauge_{row['Commune']}_{idx}")
-
-        with col2:
-            afficher_infos_commune(row)
-
-        # Ligne de séparation entre les communes
+        
+        # Conteneur principal avec effet glassmorphism
+        with st.container():
+            st.markdown(f"""
+            <div class="glass-card">
+                <h3 style="color: #667eea; margin-bottom: 1rem;">
+                    🏘️ {row['Commune']} - 📌 {row['CSIG']}
+                </h3>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            col1, col2 = st.columns([1, 2])
+            
+            with col1:
+                # Jauge de progrès modernisée
+                fig = go.Figure(go.Indicator(
+                    mode="gauge+number+delta",
+                    value=progress,
+                    domain={"x": [0, 1], "y": [0, 1]},
+                    title={"text": "Progrès", "font": {"size": 16}},
+                    delta={"reference": 100, "suffix": "%"},
+                    gauge={
+                        "axis": {"range": [None, 100], "tickwidth": 1},
+                        "bar": {"color": get_color_for_progress(progress)},
+                        "bgcolor": "white",
+                        "borderwidth": 2,
+                        "bordercolor": "gray",
+                        "steps": [
+                            {"range": [0, 25], "color": "rgba(255, 107, 107, 0.3)"},
+                            {"range": [25, 50], "color": "rgba(255, 149, 0, 0.3)"},
+                            {"range": [50, 75], "color": "rgba(255, 217, 61, 0.3)"},
+                            {"range": [75, 100], "color": "rgba(107, 207, 127, 0.3)"}
+                        ],
+                        "threshold": {
+                            "line": {"color": "red", "width": 4},
+                            "thickness": 0.75,
+                            "value": 90
+                        }
+                    }
+                ))
+                
+                fig.update_layout(
+                    height=300,
+                    margin=dict(l=20, r=20, t=50, b=20),
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    font={"color": "#2c3e50", "family": "Arial"}
+                )
+                
+                st.plotly_chart(fig, use_container_width=True, key=f"gauge_{idx}")
+            
+            with col2:
+                # Informations détaillées
+                afficher_infos_moderne(row)
+        
         st.markdown("---")
 
 
-def determiner_parametres_jauge(progress):
+def get_color_for_progress(progress):
     """
-    Détermine les paramètres de couleur pour la jauge de progrès
+    Retourne la couleur appropriée selon le progrès
     """
     if progress < 25:
-        color = "red"
-        steps = [{"range": [0, 25], "color": "lightgray"}]
-        threshold_color = "red"
+        return "#FF6B6B"
     elif progress < 50:
-        color = "orange"
-        steps = [{"range": [0, 25], "color": "red"}, {"range": [25, 50], "color": "lightgray"}]
-        threshold_color = "orange"
+        return "#FF9500"
     elif progress < 75:
-        color = "gold"
-        steps = [{"range": [0, 25], "color": "red"}, {"range": [25, 50], "color": "orange"},
-                 {"range": [50, 75], "color": "lightgray"}]
-        threshold_color = "gold"
+        return "#FFD93D"
     else:
-        color = "green"
-        steps = [{"range": [0, 25], "color": "red"}, {"range": [25, 50], "color": "orange"},
-                 {"range": [50, 75], "color": "gold"}, {"range": [75, 100], "color": "lightgray"}]
-        threshold_color = "green"
-
-    return color, steps, threshold_color
+        return "#6BCF7F"
 
 
-def afficher_jauge_progres(progress, color, steps, key_suffix):
+def afficher_infos_moderne(row):
     """
-    Affiche une jauge de progrès pour une commune
-    
-    Args:
-        progress: Valeur du progrès (pourcentage)
-        color: Couleur de la jauge basée sur le niveau d'avancement
-        steps: Étapes de couleur pour la jauge
-        key_suffix: Suffixe unique pour la clé du graphique
+    Affiche les informations d'une commune de manière moderne
     """
-    # Création d'une jauge (gauge) stylisée
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=progress,
-        domain={"x": [0, 1], "y": [0, 1]},
-        title={"text": f"Progrès: {progress:.1f}%"},
-        gauge={
-            "axis": {"range": [0, 100], "tickwidth": 1, "tickcolor": "darkblue"},
-            "bar": {"color": color},
-            "bgcolor": "white",
-            "borderwidth": 2,
-            "bordercolor": "gray",
-            "steps": steps,
-            "threshold": {
-                "line": {"color": "black", "width": 4},
-                "thickness": 0.75,
-                "value": progress
-            }
-        }
-    ))
-
-    # Configuration du layout pour une meilleure visualisation
-    fig.update_layout(
-        height=300,
-        margin=dict(l=10, r=10, t=50, b=10),
-        paper_bgcolor="rgba(0,0,0,0)",
-        font={"color": "darkblue", "family": "Arial"}
-    )
-
-    # Utiliser une clé unique pour chaque graphique
-    st.plotly_chart(fig, use_container_width=True, key=key_suffix)
-
-
-def afficher_infos_commune(row):
-    """
-    Affiche les informations détaillées d'une commune
-    """
-    # Affichage des informations de la commune
     start_date = row.get("Date Début", "Non spécifiée")
-    expected_end_date = row.get("Date de prévision de compléter les inventaires fonciers", "Non spécifiée")
-
-    st.write(f"📅 **Date de début des opérations** : {start_date}")
-    st.write(f"📅 **Date de fin prévue** : {expected_end_date}")
-
-    # Affichage des étapes d'avancement sous forme de tableau
-    etapes_raw = row.get("Progrès des étapes", "")
+    end_date = row.get("Date de prévision de compléter les inventaires fonciers", "Non spécifiée")
     
-    # Gestion sécurisée des étapes
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, #667eea20, #764ba220); 
+                padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+        <p><strong>📅 Début:</strong> {start_date}</p>
+        <p><strong>🎯 Fin prévue:</strong> {end_date}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("#### 🔄 Progression des étapes")
+    
+    etapes_raw = row.get("Progrès des étapes", "")
     if etapes_raw is None or pd.isna(etapes_raw) or not isinstance(etapes_raw, str):
         etapes = ["Non spécifié"] * 4
     else:
         etapes = etapes_raw.split("\n")
-
-    st.write("#### 🔄 Progression des étapes:")
-
-    # Création d'un tableau d'avancement avec des indicateurs colorés
-    etapes_data = [
-        ["1. Levés topo et enquêtes", etapes[0] if len(etapes) > 0 else "Non spécifié"],
-        ["2. Affichage public", etapes[1] if len(etapes) > 1 else "Non spécifié"],
-        ["3. Réunion du CTASF", etapes[2] if len(etapes) > 2 else "Non spécifié"],
-        ["4. Délibération", etapes[3] if len(etapes) > 3 else "Non spécifié"]
+    
+    etapes_noms = [
+        "1. Levés topo et enquêtes",
+        "2. Affichage public",
+        "3. Réunion du CTASF",
+        "4. Délibération"
     ]
-
-    for etape in etapes_data:
-        status = etape[1].lower()
-        if "complét" in status:
+    
+    for i, nom in enumerate(etapes_noms):
+        status = etapes[i] if i < len(etapes) else "Non spécifié"
+        status_lower = status.lower()
+        
+        if "complét" in status_lower:
             icon = "✅"
-        elif "en cours" in status:
+            color = "#6BCF7F"
+        elif "en cours" in status_lower:
             icon = "🔄"
+            color = "#FFD93D"
         else:
             icon = "⭕"
+            color = "#FF6B6B"
+        
+        st.markdown(f"""
+        <div class="status-badge" style="background: {color}20; color: {color}; border: 1px solid {color}40;">
+            {icon} <strong>{nom}</strong>: {status}
+        </div>
+        """, unsafe_allow_html=True)
 
-        st.write(f"{icon} **{etape[0]}** : {etape[1]}")
 
-
-# Alias pour compatibilité
+# Fonction de compatibilité
 def afficher_progression(df_etapes=None):
     """
     Fonction de compatibilité pour l'appel depuis dashboard.py
-    Cette fonction est un simple alias vers afficher_etat_avancement
-
-    Args:
-        df_etapes: DataFrame optionnel contenant les données d'avancement
     """
     afficher_etat_avancement(df_etapes)
