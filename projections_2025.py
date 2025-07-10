@@ -152,207 +152,431 @@ def afficher_projections_2025():
         </div>
         """, unsafe_allow_html=True)
 
-    # Jauge de progression avec voiture animée
-    st.markdown("### 🏎️ Course vers l'Objectif")
+    # Jauge de progression avec voiture animée - SUPER ATTRACTIF
+    st.markdown("""
+    <div style="text-align: center; margin: 2rem 0;">
+        <h2 style="background: linear-gradient(45deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4); 
+                   -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+                   font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">
+            🏎️ COURSE VERS L'OBJECTIF 🏆
+        </h2>
+        <p style="font-size: 1.2rem; color: #666; font-weight: 500;">
+            Votre progression en temps réel !
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Création de la piste avec voiture animée
+    # Création de la piste avec voiture animée ULTRA ATTRACTIVE
     fig_race = go.Figure()
     
-    # Piste de course (ligne de base)
+    # Piste de course dégradée (multiple lignes pour effet 3D)
+    for i, (width, color, opacity) in enumerate([(20, '#2C3E50', 0.3), (16, '#34495E', 0.5), (12, '#95A5A6', 0.7), (8, '#BDC3C7', 0.9)]):
+        fig_race.add_trace(go.Scatter(
+            x=[0, 100],
+            y=[0, 0],
+            mode='lines',
+            line=dict(color=color, width=width),
+            opacity=opacity,
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+    
+    # Ligne centrale de la piste (pointillés)
     fig_race.add_trace(go.Scatter(
-        x=[0, 100],
-        y=[0, 0],
-        mode='lines',
-        line=dict(color='gray', width=8),
-        name='Piste',
-        showlegend=False
+        x=list(range(5, 96, 10)),
+        y=[0] * len(list(range(5, 96, 10))),
+        mode='markers',
+        marker=dict(color='white', size=3, symbol='line-ns'),
+        showlegend=False,
+        hoverinfo='skip'
     ))
     
-    # Zone de départ
+    # Zone de départ avec effet brillant
     fig_race.add_shape(
         type="rect",
-        x0=-2, y0=-0.5, x1=2, y1=0.5,
-        fillcolor="lightgreen",
-        opacity=0.3,
-        line=dict(color="green", width=2),
+        x0=-3, y0=-1.2, x1=3, y1=1.2,
+        fillcolor="rgba(46, 204, 113, 0.8)",
+        line=dict(color="#27AE60", width=3),
     )
     
-    # Zone d'arrivée
+    # Zone d'arrivée avec effet brillant
     fig_race.add_shape(
         type="rect",
-        x0=98, y0=-0.5, x1=102, y1=0.5,
-        fillcolor="gold",
-        opacity=0.3,
-        line=dict(color="orange", width=2),
+        x0=97, y0=-1.2, x1=103, y1=1.2,
+        fillcolor="rgba(241, 196, 15, 0.8)",
+        line=dict(color="#F39C12", width=3),
     )
     
-    # Checkpoints sur la piste
-    for i in [25, 50, 75]:
+    # Checkpoints colorés et animés
+    checkpoint_colors = ['#E74C3C', '#9B59B6', '#3498DB', '#1ABC9C']
+    for i, checkpoint in enumerate([25, 50, 75, 90]):
         fig_race.add_shape(
-            type="line",
-            x0=i, y0=-0.3, x1=i, y1=0.3,
-            line=dict(color="white", width=3),
+            type="rect",
+            x0=checkpoint-1, y0=-0.8, x1=checkpoint+1, y1=0.8,
+            fillcolor=f"rgba({int(checkpoint_colors[i % 4][1:3], 16)}, {int(checkpoint_colors[i % 4][3:5], 16)}, {int(checkpoint_colors[i % 4][5:7], 16)}, 0.4)",
+            line=dict(color=checkpoint_colors[i % 4], width=2),
         )
         fig_race.add_annotation(
-            x=i, y=0.7,
-            text=f"{i}%",
+            x=checkpoint, y=1.5,
+            text=f"🏁 {checkpoint}%",
             showarrow=False,
-            font=dict(color="darkblue", size=12)
+            font=dict(color=checkpoint_colors[i % 4], size=14, family="Arial Black"),
+            bgcolor="white",
+            bordercolor=checkpoint_colors[i % 4],
+            borderwidth=2
         )
     
     # Position de la voiture basée sur la progression
     car_position = min(progression_pct, 100)
     
-    # Voiture (représentée par un triangle et des formes)
+    # Voiture SUPER STYLÉE avec multiple éléments
+    # Corps de la voiture
     fig_race.add_trace(go.Scatter(
         x=[car_position],
         y=[0],
         mode='markers',
         marker=dict(
-            size=30,
-            color='red',
-            symbol='triangle-right',
-            line=dict(color='darkred', width=2)
+            size=45,
+            color='#E74C3C',
+            symbol='diamond',
+            line=dict(color='#C0392B', width=3)
         ),
-        name='Voiture',
-        showlegend=False
+        showlegend=False,
+        hoverinfo='skip'
     ))
     
-    # Fumée/vitesse derrière la voiture
+    # Phares de la voiture
+    fig_race.add_trace(go.Scatter(
+        x=[car_position + 1],
+        y=[0],
+        mode='markers',
+        marker=dict(
+            size=15,
+            color='#F1C40F',
+            symbol='circle',
+            line=dict(color='#F39C12', width=2)
+        ),
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+    
+    # Fumée/vitesse derrière la voiture (plus stylée)
     if car_position > 5:
-        smoke_x = [car_position - 5, car_position - 3, car_position - 1]
-        smoke_y = [0.1, -0.1, 0.05]
-        fig_race.add_trace(go.Scatter(
-            x=smoke_x,
-            y=smoke_y,
-            mode='markers',
-            marker=dict(
-                size=[8, 6, 4],
-                color='lightgray',
-                opacity=0.6,
-                symbol='circle'
-            ),
-            name='Fumée',
-            showlegend=False
-        ))
+        smoke_positions = [(car_position - 8, 0.2), (car_position - 6, -0.2), (car_position - 4, 0.1), (car_position - 2, -0.1)]
+        for i, (x, y) in enumerate(smoke_positions):
+            fig_race.add_trace(go.Scatter(
+                x=[x],
+                y=[y],
+                mode='markers',
+                marker=dict(
+                    size=20 - i*3,
+                    color='rgba(149, 165, 166, 0.6)',
+                    symbol='circle',
+                    line=dict(color='rgba(127, 140, 141, 0.8)', width=1)
+                ),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+    
+    # Étincelles/boost si progression > 75%
+    if progression_pct > 75:
+        for i in range(3):
+            fig_race.add_trace(go.Scatter(
+                x=[car_position - 2 - i],
+                y=[0.3 * (-1)**i],
+                mode='markers',
+                marker=dict(
+                    size=8,
+                    color='#F39C12',
+                    symbol='star',
+                    line=dict(color='#E67E22', width=1)
+                ),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
     
     # Vitesse de la voiture (basée sur la progression)
-    vitesse = "🐌 Démarrage lent"
-    if progression_pct >= 75:
-        vitesse = "🚀 Vitesse maximale !"
-    elif progression_pct >= 50:
-        vitesse = "⚡ Accélération !"
-    elif progression_pct >= 25:
-        vitesse = "🏃 En route !"
+    vitesse_info = {
+        (0, 25): ("🐌 DÉMARRAGE", "#95A5A6"),
+        (25, 50): ("🏃 EN ROUTE", "#3498DB"),
+        (50, 75): ("⚡ ACCÉLÉRATION", "#9B59B6"),
+        (75, 90): ("🚀 TURBO MODE", "#E67E22"),
+        (90, 100): ("🔥 VITESSE MAX", "#E74C3C"),
+        (100, 101): ("🏆 CHAMPION", "#F1C40F")
+    }
     
-    # Annotations
+    vitesse_text, vitesse_color = next((text, color) for (min_val, max_val), (text, color) in vitesse_info.items() if min_val <= progression_pct < max_val)
+    
+    # Annotations avec style amélioré
     fig_race.add_annotation(
-        x=0, y=-1,
+        x=0, y=-2,
         text="🏁 DÉPART",
         showarrow=False,
-        font=dict(color="green", size=14, family="Arial Black")
+        font=dict(color="#27AE60", size=18, family="Arial Black"),
+        bgcolor="rgba(46, 204, 113, 0.2)",
+        bordercolor="#27AE60",
+        borderwidth=2
     )
     
     fig_race.add_annotation(
-        x=100, y=-1,
-        text="🏆 OBJECTIF",
+        x=100, y=-2,
+        text="🏆 VICTOIRE",
         showarrow=False,
-        font=dict(color="orange", size=14, family="Arial Black")
+        font=dict(color="#F39C12", size=18, family="Arial Black"),
+        bgcolor="rgba(241, 196, 15, 0.2)",
+        bordercolor="#F39C12",
+        borderwidth=2
     )
     
+    # Annotation voiture avec bulle stylée
     fig_race.add_annotation(
-        x=car_position, y=1,
+        x=car_position, y=2,
         text=f"🏎️ {progression_pct:.1f}%",
         showarrow=True,
         arrowhead=2,
-        arrowcolor="red",
-        font=dict(color="red", size=16, family="Arial Black")
+        arrowcolor=vitesse_color,
+        arrowwidth=3,
+        font=dict(color=vitesse_color, size=20, family="Arial Black"),
+        bgcolor="white",
+        bordercolor=vitesse_color,
+        borderwidth=3
+    )
+    
+    # Décoration du fond avec nuages
+    for i, x in enumerate([15, 35, 60, 85]):
+        fig_race.add_annotation(
+            x=x, y=2.5,
+            text="☁️",
+            showarrow=False,
+            font=dict(color="rgba(255, 255, 255, 0.7)", size=20)
+        )
+    
+    # Soleil
+    fig_race.add_annotation(
+        x=90, y=3,
+        text="☀️",
+        showarrow=False,
+        font=dict(color="#F1C40F", size=25)
     )
     
     fig_race.update_layout(
-        title=f"🏁 Course vers l'Objectif - {vitesse}",
+        title=dict(
+            text=f"<b style='color: {vitesse_color}; font-size: 24px;'>{vitesse_text}</b>",
+            x=0.5,
+            font=dict(size=24, family="Arial Black")
+        ),
         xaxis=dict(
-            range=[-5, 105],
+            range=[-8, 108],
             showgrid=False,
             zeroline=False,
             showticklabels=False,
             title=""
         ),
         yaxis=dict(
-            range=[-1.5, 1.5],
+            range=[-2.5, 3.5],
             showgrid=False,
             zeroline=False,
             showticklabels=False,
             title=""
         ),
-        height=300,
-        paper_bgcolor="rgba(135, 206, 235, 0.1)",  # Fond bleu ciel léger
-        plot_bgcolor="rgba(144, 238, 144, 0.1)",   # Fond vert prairie léger
+        height=400,
+        paper_bgcolor="linear-gradient(135deg, #74b9ff, #0984e3)",
+        plot_bgcolor="rgba(116, 185, 255, 0.1)",
         font=dict(family="Arial", size=12),
         showlegend=False
     )
     
     st.plotly_chart(fig_race, use_container_width=True)
     
-    # Jauge traditionnelle en complément
+    # Compteurs stylés avec design gaming
     col1, col2 = st.columns(2)
     
     with col1:
-        # Compteur de vitesse style voiture
-        fig_speedometer = go.Figure(go.Indicator(
-            mode = "gauge+number",
-            value = progression_pct,
-            domain = {'x': [0, 1], 'y': [0, 1]},
-            title = {'text': "🏎️ Compteur de Progression"},
-            gauge = {
-                'axis': {'range': [None, 100]},
-                'bar': {'color': "red"},
-                'steps': [
-                    {'range': [0, 25], 'color': "lightgray"},
-                    {'range': [25, 50], 'color': "yellow"},
-                    {'range': [50, 75], 'color': "orange"},
-                    {'range': [75, 100], 'color': "lightgreen"}
-                ],
-                'threshold': {
-                    'line': {'color': "red", 'width': 4},
-                    'thickness': 0.75,
-                    'value': 90
-                }
-            }
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    padding: 1.5rem; border-radius: 20px; color: white; text-align: center; 
+                    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);">
+            <h3 style="margin: 0; font-size: 1.8rem;">🏎️ COMPTEUR DIGITAL</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Compteur de vitesse style gaming
+        fig_speedometer = go.Figure()
+        
+        # Cercle extérieur
+        fig_speedometer.add_trace(go.Scatter(
+            x=[0], y=[0],
+            mode='markers',
+            marker=dict(
+                size=200,
+                color='rgba(0,0,0,0)',
+                line=dict(color='#2C3E50', width=8)
+            ),
+            showlegend=False,
+            hoverinfo='skip'
         ))
         
+        # Secteurs colorés
+        angles = np.linspace(0, 2*np.pi, 100)
+        for i, (start, end, color) in enumerate([(0, 0.25, '#E74C3C'), (0.25, 0.5, '#F39C12'), (0.5, 0.75, '#F1C40F'), (0.75, 1, '#2ECC71')]):
+            sector_angles = angles[int(start*100):int(end*100)]
+            if len(sector_angles) > 0:
+                x_coords = [0] + [0.8 * np.cos(a - np.pi/2) for a in sector_angles] + [0]
+                y_coords = [0] + [0.8 * np.sin(a - np.pi/2) for a in sector_angles] + [0]
+                fig_speedometer.add_trace(go.Scatter(
+                    x=x_coords, y=y_coords,
+                    fill='toself',
+                    fillcolor=f'rgba({int(color[1:3], 16)}, {int(color[3:5], 16)}, {int(color[5:7], 16)}, 0.3)',
+                    line=dict(color=color, width=2),
+                    showlegend=False,
+                    hoverinfo='skip'
+                ))
+        
+        # Aiguille
+        needle_angle = (progression_pct / 100) * 2 * np.pi - np.pi/2
+        needle_x = [0, 0.7 * np.cos(needle_angle)]
+        needle_y = [0, 0.7 * np.sin(needle_angle)]
+        fig_speedometer.add_trace(go.Scatter(
+            x=needle_x, y=needle_y,
+            mode='lines',
+            line=dict(color='#C0392B', width=6),
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+        
+        # Centre du compteur
+        fig_speedometer.add_trace(go.Scatter(
+            x=[0], y=[0],
+            mode='markers',
+            marker=dict(size=30, color='#2C3E50'),
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+        
+        # Chiffres sur le compteur
+        for i in range(5):
+            angle = i * np.pi/2 - np.pi/2
+            x_pos = 0.9 * np.cos(angle)
+            y_pos = 0.9 * np.sin(angle)
+            fig_speedometer.add_annotation(
+                x=x_pos, y=y_pos,
+                text=str(i * 25),
+                showarrow=False,
+                font=dict(color='white', size=16, family="Arial Black")
+            )
+        
+        # Valeur centrale
+        fig_speedometer.add_annotation(
+            x=0, y=-0.3,
+            text=f"{progression_pct:.1f}%",
+            showarrow=False,
+            font=dict(color='white', size=24, family="Arial Black")
+        )
+        
         fig_speedometer.update_layout(
+            xaxis=dict(range=[-1.2, 1.2], showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(range=[-1.2, 1.2], showgrid=False, zeroline=False, showticklabels=False),
             height=300,
-            font={'color': "darkblue", 'family': "Arial"},
             paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
+            plot_bgcolor="rgba(0,0,0,0)",
+            showlegend=False
         )
         
         st.plotly_chart(fig_speedometer, use_container_width=True)
     
     with col2:
-        # Informations de course
-        st.markdown("### 📊 Informations de Course")
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #ff7b7b 0%, #667eea 100%); 
+                    padding: 1.5rem; border-radius: 20px; color: white; text-align: center; 
+                    box-shadow: 0 15px 35px rgba(255, 123, 123, 0.3);">
+            <h3 style="margin: 0; font-size: 1.8rem;">📊 STATS DE COURSE</h3>
+        </div>
+        """, unsafe_allow_html=True)
         
+        # Informations de course avec style gaming
         distance_parcourue = progression_pct
         distance_restante = 100 - progression_pct
         
-        st.metric("🏁 Distance parcourue", f"{distance_parcourue:.1f}%")
-        st.metric("🎯 Distance restante", f"{distance_restante:.1f}%")
+        # Cartes d'info stylées
+        st.markdown(f"""
+        <div style="background: linear-gradient(45deg, #FF6B6B, #4ECDC4); 
+                    padding: 1rem; border-radius: 15px; margin: 0.5rem 0; 
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.15);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 1.2rem; font-weight: bold; color: white;">🏁 DISTANCE</span>
+                <span style="font-size: 1.5rem; font-weight: bold; color: white;">{distance_parcourue:.1f}%</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
-        # Messages motivants selon la position
+        st.markdown(f"""
+        <div style="background: linear-gradient(45deg, #4ECDC4, #45B7D1); 
+                    padding: 1rem; border-radius: 15px; margin: 0.5rem 0; 
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.15);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 1.2rem; font-weight: bold; color: white;">🎯 RESTANT</span>
+                <span style="font-size: 1.5rem; font-weight: bold; color: white;">{distance_restante:.1f}%</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Messages motivants selon la position avec style amélioré
         if progression_pct >= 100:
-            st.success("🏆 **VICTOIRE !** Objectif atteint !")
+            st.markdown("""
+            <div style="background: linear-gradient(45deg, #F1C40F, #E67E22); 
+                        padding: 1rem; border-radius: 15px; margin: 1rem 0; 
+                        box-shadow: 0 10px 30px rgba(241, 196, 15, 0.4); 
+                        border: 3px solid #F39C12; animation: pulse 2s infinite;">
+                <h3 style="margin: 0; color: white; text-align: center;">🏆 VICTOIRE TOTALE ! 🏆</h3>
+                <p style="margin: 0.5rem 0 0 0; color: white; text-align: center; font-weight: bold;">
+                    Objectif dépassé ! Vous êtes un champion !
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
         elif progression_pct >= 90:
-            st.warning("🔥 **LIGNE DROITE !** Plus que quelques mètres !")
+            st.markdown("""
+            <div style="background: linear-gradient(45deg, #E74C3C, #C0392B); 
+                        padding: 1rem; border-radius: 15px; margin: 1rem 0; 
+                        box-shadow: 0 10px 30px rgba(231, 76, 60, 0.4);">
+                <h3 style="margin: 0; color: white; text-align: center;">🔥 LIGNE DROITE ! 🔥</h3>
+                <p style="margin: 0.5rem 0 0 0; color: white; text-align: center;">
+                    Plus que quelques mètres vers la victoire !
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
         elif progression_pct >= 75:
-            st.info("⚡ **DERNIER VIRAGE !** Vous y êtes presque !")
+            st.markdown("""
+            <div style="background: linear-gradient(45deg, #9B59B6, #8E44AD); 
+                        padding: 1rem; border-radius: 15px; margin: 1rem 0; 
+                        box-shadow: 0 10px 30px rgba(155, 89, 182, 0.4);">
+                <h3 style="margin: 0; color: white; text-align: center;">⚡ TURBO ACTIVÉ ! ⚡</h3>
+                <p style="margin: 0.5rem 0 0 0; color: white; text-align: center;">
+                    Excellent rythme ! Continuez !
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
         elif progression_pct >= 50:
-            st.info("🏃 **MI-COURSE !** Bonne cadence !")
-        elif progression_pct >= 25:
-            st.info("🚗 **PREMIER QUART !** Continuez comme ça !")
+            st.markdown("""
+            <div style="background: linear-gradient(45deg, #3498DB, #2980B9); 
+                        padding: 1rem; border-radius: 15px; margin: 1rem 0; 
+                        box-shadow: 0 10px 30px rgba(52, 152, 219, 0.4);">
+                <h3 style="margin: 0; color: white; text-align: center;">🏃 MI-PARCOURS ! 🏃</h3>
+                <p style="margin: 0.5rem 0 0 0; color: white; text-align: center;">
+                    Bonne progression ! Restez concentré !
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            st.error("🏁 **DÉPART !** Accélérez pour rattraper !")
+            st.markdown("""
+            <div style="background: linear-gradient(45deg, #95A5A6, #7F8C8D); 
+                        padding: 1rem; border-radius: 15px; margin: 1rem 0; 
+                        box-shadow: 0 10px 30px rgba(149, 165, 166, 0.4);">
+                <h3 style="margin: 0; color: white; text-align: center;">🚀 DÉCOLLAGE ! 🚀</h3>
+                <p style="margin: 0.5rem 0 0 0; color: white; text-align: center;">
+                    Accélérez pour rattraper l'objectif !
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
 
     # Graphique en barres interactif avec Plotly
     st.markdown("### 📊 Suivi Mensuel : Objectifs vs Réalisés")
