@@ -25,43 +25,36 @@ def afficher_projections_2025():
         initial_sidebar_state="collapsed"
     )
     
-    # CSS personnalisé pour un design moderne avec animations ralenties
+    # CSS personnalisé pour un design moderne
     st.markdown("""
     <style>
-    body {
-        background: #F7F9FB;
-    }
     .main-header {
-        background: linear-gradient(120deg, #6C63FF 0%, #48CAE4 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 2.5rem 1rem 2rem 1rem;
-        border-radius: 20px;
-        margin-bottom: 2.5rem;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
         text-align: center;
-        box-shadow: 0 8px 32px rgba(108,99,255,0.15);
-        font-family: 'Montserrat', sans-serif;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     }
     .metric-card {
-        background: #FFFFFF;
-        padding: 2rem 1.5rem;
-        border-radius: 18px;
-        box-shadow: 0 4px 24px rgba(76,110,245,0.07);
-        border-left: 6px solid #6C63FF;
-        margin-bottom: 1.5rem;
-        transition: box-shadow 0.5s ease, transform 0.5s ease;
-        font-family: 'Inter', sans-serif;
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        border-left: 5px solid #667eea;
+        margin-bottom: 1rem;
+        transition: transform 0.3s ease;
     }
     .metric-card:hover {
-        box-shadow: 0 8px 32px rgba(76,110,245,0.13);
-        transform: translateY(-6px) scale(1.03);
+        transform: translateY(-5px);
     }
     .chart-container {
-        background: #FFFFFF;
-        padding: 2.5rem 2rem;
-        border-radius: 20px;
-        box-shadow: 0 4px 24px rgba(76,110,245,0.07);
-        margin-bottom: 2.5rem;
-        font-family: 'Inter', sans-serif;
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
     }
     .progress-ring {
         animation: pulse 2s infinite;
@@ -72,7 +65,7 @@ def afficher_projections_2025():
         100% { transform: scale(1); }
     }
     .fade-in {
-        animation: fadeIn 1.8s ease-in-out forwards;
+        animation: fadeIn 1s ease-in;
     }
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(30px); }
@@ -135,8 +128,8 @@ def afficher_projections_2025():
     with col1:
         st.markdown(f"""
         <div class="metric-card fade-in">
-            <h3 style="color: #6C63FF; margin: 0;">📌 Levés Réalisés</h3>
-            <h2 style="color: #22223B; margin: 0.5rem 0;">{realises_total:,}</h2>
+            <h3 style="color: #667eea; margin: 0;">📌 Levés Réalisés</h3>
+            <h2 style="color: #2d3748; margin: 0.5rem 0;">{realises_total:,}</h2>
             <p style="color: #4a5568; margin: 0;">Total actuel</p>
         </div>
         """, unsafe_allow_html=True)
@@ -144,8 +137,8 @@ def afficher_projections_2025():
     with col2:
         st.markdown(f"""
         <div class="metric-card fade-in">
-            <h3 style="color: #6C63FF; margin: 0;">🎯 Objectif Total</h3>
-            <h2 style="color: #22223B; margin: 0.5rem 0;">{objectif_total:,.0f}</h2>
+            <h3 style="color: #667eea; margin: 0;">🎯 Objectif Total</h3>
+            <h2 style="color: #2d3748; margin: 0.5rem 0;">{objectif_total:,.0f}</h2>
             <p style="color: #4a5568; margin: 0;">Objectif 2025</p>
         </div>
         """, unsafe_allow_html=True)
@@ -153,141 +146,154 @@ def afficher_projections_2025():
     with col3:
         st.markdown(f"""
         <div class="metric-card fade-in">
-            <h3 style="color: #6C63FF; margin: 0;">⚡ Progression</h3>
-            <h2 style="color: #22223B; margin: 0.5rem 0;">{progression_pct:.1f}%</h2>
+            <h3 style="color: #667eea; margin: 0;">⚡ Progression</h3>
+            <h2 style="color: #2d3748; margin: 0.5rem 0;">{progression_pct:.1f}%</h2>
             <p style="color: #4a5568; margin: 0;">De l'objectif</p>
         </div>
         """, unsafe_allow_html=True)
 
-    # Jauge de progression avec voiture animée ralentie
+    # Jauge de progression avec voiture animée
     st.markdown("### 🏎️ Course vers l'Objectif")
-
-    race_placeholder = st.empty()
-
-    # Animation ralentie de la voiture
-    for pos in np.linspace(0, min(progression_pct, 100), num=50):
-        fig_race = go.Figure()
-        # Piste de course (ligne de base)
-        fig_race.add_trace(go.Scatter(
-            x=[0, 100],
-            y=[0, 0],
-            mode='lines',
-            line=dict(color='gray', width=8),
-            showlegend=False
-        ))
-        # Zone de départ
+    
+    # Création de la piste avec voiture animée
+    fig_race = go.Figure()
+    
+    # Piste de course (ligne de base)
+    fig_race.add_trace(go.Scatter(
+        x=[0, 100],
+        y=[0, 0],
+        mode='lines',
+        line=dict(color='gray', width=8),
+        name='Piste',
+        showlegend=False
+    ))
+    
+    # Zone de départ
+    fig_race.add_shape(
+        type="rect",
+        x0=-2, y0=-0.5, x1=2, y1=0.5,
+        fillcolor="lightgreen",
+        opacity=0.3,
+        line=dict(color="green", width=2),
+    )
+    
+    # Zone d'arrivée
+    fig_race.add_shape(
+        type="rect",
+        x0=98, y0=-0.5, x1=102, y1=0.5,
+        fillcolor="gold",
+        opacity=0.3,
+        line=dict(color="orange", width=2),
+    )
+    
+    # Checkpoints sur la piste
+    for i in [25, 50, 75]:
         fig_race.add_shape(
-            type="rect",
-            x0=-2, y0=-0.5, x1=2, y1=0.5,
-            fillcolor="lightgreen",
-            opacity=0.3,
-            line=dict(color="green", width=2),
+            type="line",
+            x0=i, y0=-0.3, x1=i, y1=0.3,
+            line=dict(color="white", width=3),
         )
-        # Zone d'arrivée
-        fig_race.add_shape(
-            type="rect",
-            x0=98, y0=-0.5, x1=102, y1=0.5,
-            fillcolor="gold",
-            opacity=0.3,
-            line=dict(color="orange", width=2),
+        fig_race.add_annotation(
+            x=i, y=0.7,
+            text=f"{i}%",
+            showarrow=False,
+            font=dict(color="darkblue", size=12)
         )
-        # Checkpoints sur la piste
-        for i in [25, 50, 75]:
-            fig_race.add_shape(
-                type="line",
-                x0=i, y0=-0.3, x1=i, y1=0.3,
-                line=dict(color="white", width=3),
-            )
-            fig_race.add_annotation(
-                x=i, y=0.7,
-                text=f"{i}%",
-                showarrow=False,
-                font=dict(color="darkblue", size=12)
-            )
-        # Voiture position actuelle
+    
+    # Position de la voiture basée sur la progression
+    car_position = min(progression_pct, 100)
+    
+    # Voiture (représentée par un triangle et des formes)
+    fig_race.add_trace(go.Scatter(
+        x=[car_position],
+        y=[0],
+        mode='markers',
+        marker=dict(
+            size=30,
+            color='red',
+            symbol='triangle-right',
+            line=dict(color='darkred', width=2)
+        ),
+        name='Voiture',
+        showlegend=False
+    ))
+    
+    # Fumée/vitesse derrière la voiture
+    if car_position > 5:
+        smoke_x = [car_position - 5, car_position - 3, car_position - 1]
+        smoke_y = [0.1, -0.1, 0.05]
         fig_race.add_trace(go.Scatter(
-            x=[pos],
-            y=[0],
+            x=smoke_x,
+            y=smoke_y,
             mode='markers',
             marker=dict(
-                size=30,
-                color='red',
-                symbol='triangle-right',
-                line=dict(color='darkred', width=2)
+                size=[8, 6, 4],
+                color='lightgray',
+                opacity=0.6,
+                symbol='circle'
             ),
+            name='Fumée',
             showlegend=False
         ))
-        # Fumée/vitesse derrière la voiture
-        if pos > 5:
-            smoke_x = [pos - 5, pos - 3, pos - 1]
-            smoke_y = [0.1, -0.1, 0.05]
-            fig_race.add_trace(go.Scatter(
-                x=smoke_x,
-                y=smoke_y,
-                mode='markers',
-                marker=dict(
-                    size=[8, 6, 4],
-                    color='lightgray',
-                    opacity=0.6,
-                    symbol='circle'
-                ),
-                showlegend=False
-            ))
-        # Vitesse de la voiture (basée sur la progression)
-        vitesse = "🐌 Démarrage lent"
-        if pos >= 75:
-            vitesse = "🚀 Vitesse maximale !"
-        elif pos >= 50:
-            vitesse = "⚡ Accélération !"
-        elif pos >= 25:
-            vitesse = "🏃 En route !"
-        # Annotations
-        fig_race.add_annotation(
-            x=0, y=-1,
-            text="🏁 DÉPART",
-            showarrow=False,
-            font=dict(color="green", size=14, family="Arial Black")
-        )
-        fig_race.add_annotation(
-            x=100, y=-1,
-            text="🏆 OBJECTIF",
-            showarrow=False,
-            font=dict(color="orange", size=14, family="Arial Black")
-        )
-        fig_race.add_annotation(
-            x=pos, y=1,
-            text=f"🏎️ {pos:.1f}%",
-            showarrow=True,
-            arrowhead=2,
-            arrowcolor="red",
-            font=dict(color="red", size=16, family="Arial Black")
-        )
-        fig_race.update_layout(
-            title=f"🏁 Course vers l'Objectif - {vitesse}",
-            xaxis=dict(
-                range=[-5, 105],
-                showgrid=False,
-                zeroline=False,
-                showticklabels=False,
-                title=""
-            ),
-            yaxis=dict(
-                range=[-1.5, 1.5],
-                showgrid=False,
-                zeroline=False,
-                showticklabels=False,
-                title=""
-            ),
-            height=300,
-            paper_bgcolor="rgba(135, 206, 235, 0.1)",  # Fond bleu ciel léger
-            plot_bgcolor="rgba(144, 238, 144, 0.1)",   # Fond vert prairie léger
-            font=dict(family="Arial", size=12),
-            showlegend=False,
-            transition={'duration': 500, 'easing': 'cubic-in-out'}
-        )
-        race_placeholder.plotly_chart(fig_race, use_container_width=True)
-        time.sleep(0.1)  # délai pour ralentir l'animation (100ms)
-
+    
+    # Vitesse de la voiture (basée sur la progression)
+    vitesse = "🐌 Démarrage lent"
+    if progression_pct >= 75:
+        vitesse = "🚀 Vitesse maximale !"
+    elif progression_pct >= 50:
+        vitesse = "⚡ Accélération !"
+    elif progression_pct >= 25:
+        vitesse = "🏃 En route !"
+    
+    # Annotations
+    fig_race.add_annotation(
+        x=0, y=-1,
+        text="🏁 DÉPART",
+        showarrow=False,
+        font=dict(color="green", size=14, family="Arial Black")
+    )
+    
+    fig_race.add_annotation(
+        x=100, y=-1,
+        text="🏆 OBJECTIF",
+        showarrow=False,
+        font=dict(color="orange", size=14, family="Arial Black")
+    )
+    
+    fig_race.add_annotation(
+        x=car_position, y=1,
+        text=f"🏎️ {progression_pct:.1f}%",
+        showarrow=True,
+        arrowhead=2,
+        arrowcolor="red",
+        font=dict(color="red", size=16, family="Arial Black")
+    )
+    
+    fig_race.update_layout(
+        title=f"🏁 Course vers l'Objectif - {vitesse}",
+        xaxis=dict(
+            range=[-5, 105],
+            showgrid=False,
+            zeroline=False,
+            showticklabels=False,
+            title=""
+        ),
+        yaxis=dict(
+            range=[-1.5, 1.5],
+            showgrid=False,
+            zeroline=False,
+            showticklabels=False,
+            title=""
+        ),
+        height=300,
+        paper_bgcolor="rgba(135, 206, 235, 0.1)",  # Fond bleu ciel léger
+        plot_bgcolor="rgba(144, 238, 144, 0.1)",   # Fond vert prairie léger
+        font=dict(family="Arial", size=12),
+        showlegend=False
+    )
+    
+    st.plotly_chart(fig_race, use_container_width=True)
+    
     # Jauge traditionnelle en complément
     col1, col2 = st.columns(2)
     
@@ -319,8 +325,7 @@ def afficher_projections_2025():
             height=300,
             font={'color': "darkblue", 'family': "Arial"},
             paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            transition={'duration': 1500, 'easing': 'cubic-in-out'}
+            plot_bgcolor="rgba(0,0,0,0)"
         )
         
         st.plotly_chart(fig_speedometer, use_container_width=True)
@@ -390,8 +395,7 @@ def afficher_projections_2025():
             y=1.02,
             xanchor="right",
             x=1
-        ),
-        transition={'duration': 1500, 'easing': 'cubic-in-out'}
+        )
     )
     
     fig_bar.update_traces(
@@ -437,8 +441,7 @@ def afficher_projections_2025():
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Arial", size=12),
-        showlegend=True,
-        transition={'duration': 1500, 'easing': 'cubic-in-out'}
+        showlegend=True
     )
     
     st.plotly_chart(fig_area, use_container_width=True)
@@ -470,8 +473,7 @@ def afficher_projections_2025():
         title="Performance Mensuelle (%)",
         height=500,
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        transition={'duration': 1500, 'easing': 'cubic-in-out'}
+        plot_bgcolor="rgba(0,0,0,0)"
     )
     
     st.plotly_chart(fig_radar, use_container_width=True)
@@ -549,7 +551,3 @@ def afficher_projections_2025():
         st.info("💪 Bonne progression ! Continuez sur cette lancée !")
     else:
         st.error("🚀 Il est temps d'accélérer pour atteindre l'objectif !")
-
-
-if __name__ == "__main__":
-    afficher_projections_2025()
