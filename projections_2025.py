@@ -152,41 +152,207 @@ def afficher_projections_2025():
         </div>
         """, unsafe_allow_html=True)
 
-    # Jauge de progression animée avec Plotly
-    st.markdown("### 🎯 Jauge de Progression")
+    # Jauge de progression avec voiture animée
+    st.markdown("### 🏎️ Course vers l'Objectif")
     
-    # Création de la jauge avec Plotly
-    fig_gauge = go.Figure(go.Indicator(
-        mode = "gauge+number+delta",
-        value = progression_pct,
-        domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': "Progression de l'Objectif"},
-        delta = {'reference': 100, 'increasing': {'color': "green"}},
-        gauge = {
-            'axis': {'range': [None, 100]},
-            'bar': {'color': "darkgreen"},
-            'steps': [
-                {'range': [0, 25], 'color': "lightgray"},
-                {'range': [25, 50], 'color': "gray"},
-                {'range': [50, 75], 'color': "lightblue"},
-                {'range': [75, 100], 'color': "lightgreen"}
-            ],
-            'threshold': {
-                'line': {'color': "red", 'width': 4},
-                'thickness': 0.75,
-                'value': 90
-            }
-        }
+    # Création de la piste avec voiture animée
+    fig_race = go.Figure()
+    
+    # Piste de course (ligne de base)
+    fig_race.add_trace(go.Scatter(
+        x=[0, 100],
+        y=[0, 0],
+        mode='lines',
+        line=dict(color='gray', width=8),
+        name='Piste',
+        showlegend=False
     ))
     
-    fig_gauge.update_layout(
-        height=400,
-        font={'color': "darkblue", 'family': "Arial"},
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)"
+    # Zone de départ
+    fig_race.add_shape(
+        type="rect",
+        x0=-2, y0=-0.5, x1=2, y1=0.5,
+        fillcolor="lightgreen",
+        opacity=0.3,
+        line=dict(color="green", width=2),
     )
     
-    st.plotly_chart(fig_gauge, use_container_width=True)
+    # Zone d'arrivée
+    fig_race.add_shape(
+        type="rect",
+        x0=98, y0=-0.5, x1=102, y1=0.5,
+        fillcolor="gold",
+        opacity=0.3,
+        line=dict(color="orange", width=2),
+    )
+    
+    # Checkpoints sur la piste
+    for i in [25, 50, 75]:
+        fig_race.add_shape(
+            type="line",
+            x0=i, y0=-0.3, x1=i, y1=0.3,
+            line=dict(color="white", width=3),
+        )
+        fig_race.add_annotation(
+            x=i, y=0.7,
+            text=f"{i}%",
+            showarrow=False,
+            font=dict(color="darkblue", size=12)
+        )
+    
+    # Position de la voiture basée sur la progression
+    car_position = min(progression_pct, 100)
+    
+    # Voiture (représentée par un triangle et des formes)
+    fig_race.add_trace(go.Scatter(
+        x=[car_position],
+        y=[0],
+        mode='markers',
+        marker=dict(
+            size=30,
+            color='red',
+            symbol='triangle-right',
+            line=dict(color='darkred', width=2)
+        ),
+        name='Voiture',
+        showlegend=False
+    ))
+    
+    # Fumée/vitesse derrière la voiture
+    if car_position > 5:
+        smoke_x = [car_position - 5, car_position - 3, car_position - 1]
+        smoke_y = [0.1, -0.1, 0.05]
+        fig_race.add_trace(go.Scatter(
+            x=smoke_x,
+            y=smoke_y,
+            mode='markers',
+            marker=dict(
+                size=[8, 6, 4],
+                color='lightgray',
+                opacity=0.6,
+                symbol='circle'
+            ),
+            name='Fumée',
+            showlegend=False
+        ))
+    
+    # Vitesse de la voiture (basée sur la progression)
+    vitesse = "🐌 Démarrage lent"
+    if progression_pct >= 75:
+        vitesse = "🚀 Vitesse maximale !"
+    elif progression_pct >= 50:
+        vitesse = "⚡ Accélération !"
+    elif progression_pct >= 25:
+        vitesse = "🏃 En route !"
+    
+    # Annotations
+    fig_race.add_annotation(
+        x=0, y=-1,
+        text="🏁 DÉPART",
+        showarrow=False,
+        font=dict(color="green", size=14, family="Arial Black")
+    )
+    
+    fig_race.add_annotation(
+        x=100, y=-1,
+        text="🏆 OBJECTIF",
+        showarrow=False,
+        font=dict(color="orange", size=14, family="Arial Black")
+    )
+    
+    fig_race.add_annotation(
+        x=car_position, y=1,
+        text=f"🏎️ {progression_pct:.1f}%",
+        showarrow=True,
+        arrowhead=2,
+        arrowcolor="red",
+        font=dict(color="red", size=16, family="Arial Black")
+    )
+    
+    fig_race.update_layout(
+        title=f"🏁 Course vers l'Objectif - {vitesse}",
+        xaxis=dict(
+            range=[-5, 105],
+            showgrid=False,
+            zeroline=False,
+            showticklabels=False,
+            title=""
+        ),
+        yaxis=dict(
+            range=[-1.5, 1.5],
+            showgrid=False,
+            zeroline=False,
+            showticklabels=False,
+            title=""
+        ),
+        height=300,
+        paper_bgcolor="rgba(135, 206, 235, 0.1)",  # Fond bleu ciel léger
+        plot_bgcolor="rgba(144, 238, 144, 0.1)",   # Fond vert prairie léger
+        font=dict(family="Arial", size=12),
+        showlegend=False
+    )
+    
+    st.plotly_chart(fig_race, use_container_width=True)
+    
+    # Jauge traditionnelle en complément
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Compteur de vitesse style voiture
+        fig_speedometer = go.Figure(go.Indicator(
+            mode = "gauge+number",
+            value = progression_pct,
+            domain = {'x': [0, 1], 'y': [0, 1]},
+            title = {'text': "🏎️ Compteur de Progression"},
+            gauge = {
+                'axis': {'range': [None, 100]},
+                'bar': {'color': "red"},
+                'steps': [
+                    {'range': [0, 25], 'color': "lightgray"},
+                    {'range': [25, 50], 'color': "yellow"},
+                    {'range': [50, 75], 'color': "orange"},
+                    {'range': [75, 100], 'color': "lightgreen"}
+                ],
+                'threshold': {
+                    'line': {'color': "red", 'width': 4},
+                    'thickness': 0.75,
+                    'value': 90
+                }
+            }
+        ))
+        
+        fig_speedometer.update_layout(
+            height=300,
+            font={'color': "darkblue", 'family': "Arial"},
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)"
+        )
+        
+        st.plotly_chart(fig_speedometer, use_container_width=True)
+    
+    with col2:
+        # Informations de course
+        st.markdown("### 📊 Informations de Course")
+        
+        distance_parcourue = progression_pct
+        distance_restante = 100 - progression_pct
+        
+        st.metric("🏁 Distance parcourue", f"{distance_parcourue:.1f}%")
+        st.metric("🎯 Distance restante", f"{distance_restante:.1f}%")
+        
+        # Messages motivants selon la position
+        if progression_pct >= 100:
+            st.success("🏆 **VICTOIRE !** Objectif atteint !")
+        elif progression_pct >= 90:
+            st.warning("🔥 **LIGNE DROITE !** Plus que quelques mètres !")
+        elif progression_pct >= 75:
+            st.info("⚡ **DERNIER VIRAGE !** Vous y êtes presque !")
+        elif progression_pct >= 50:
+            st.info("🏃 **MI-COURSE !** Bonne cadence !")
+        elif progression_pct >= 25:
+            st.info("🚗 **PREMIER QUART !** Continuez comme ça !")
+        else:
+            st.error("🏁 **DÉPART !** Accélérez pour rattraper !")
 
     # Graphique en barres interactif avec Plotly
     st.markdown("### 📊 Suivi Mensuel : Objectifs vs Réalisés")
