@@ -25,36 +25,43 @@ def afficher_projections_2025():
         initial_sidebar_state="collapsed"
     )
     
-    # CSS personnalisé pour un design moderne
+    # CSS personnalisé pour un design moderne avec animations ralenties
     st.markdown("""
     <style>
+    body {
+        background: #F7F9FB;
+    }
     .main-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(120deg, #6C63FF 0%, #48CAE4 100%);
         color: white;
-        padding: 2rem;
-        border-radius: 15px;
-        margin-bottom: 2rem;
+        padding: 2.5rem 1rem 2rem 1rem;
+        border-radius: 20px;
+        margin-bottom: 2.5rem;
         text-align: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        box-shadow: 0 8px 32px rgba(108,99,255,0.15);
+        font-family: 'Montserrat', sans-serif;
     }
     .metric-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        border-left: 5px solid #667eea;
-        margin-bottom: 1rem;
-        transition: transform 0.3s ease;
+        background: #FFFFFF;
+        padding: 2rem 1.5rem;
+        border-radius: 18px;
+        box-shadow: 0 4px 24px rgba(76,110,245,0.07);
+        border-left: 6px solid #6C63FF;
+        margin-bottom: 1.5rem;
+        transition: box-shadow 0.5s ease, transform 0.5s ease;
+        font-family: 'Inter', sans-serif;
     }
     .metric-card:hover {
-        transform: translateY(-5px);
+        box-shadow: 0 8px 32px rgba(76,110,245,0.13);
+        transform: translateY(-6px) scale(1.03);
     }
     .chart-container {
-        background: white;
-        padding: 2rem;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        margin-bottom: 2rem;
+        background: #FFFFFF;
+        padding: 2.5rem 2rem;
+        border-radius: 20px;
+        box-shadow: 0 4px 24px rgba(76,110,245,0.07);
+        margin-bottom: 2.5rem;
+        font-family: 'Inter', sans-serif;
     }
     .progress-ring {
         animation: pulse 2s infinite;
@@ -65,7 +72,7 @@ def afficher_projections_2025():
         100% { transform: scale(1); }
     }
     .fade-in {
-        animation: fadeIn 1s ease-in;
+        animation: fadeIn 1.8s ease-in-out forwards;
     }
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(30px); }
@@ -128,8 +135,8 @@ def afficher_projections_2025():
     with col1:
         st.markdown(f"""
         <div class="metric-card fade-in">
-            <h3 style="color: #667eea; margin: 0;">📌 Levés Réalisés</h3>
-            <h2 style="color: #2d3748; margin: 0.5rem 0;">{realises_total:,}</h2>
+            <h3 style="color: #6C63FF; margin: 0;">📌 Levés Réalisés</h3>
+            <h2 style="color: #22223B; margin: 0.5rem 0;">{realises_total:,}</h2>
             <p style="color: #4a5568; margin: 0;">Total actuel</p>
         </div>
         """, unsafe_allow_html=True)
@@ -137,8 +144,8 @@ def afficher_projections_2025():
     with col2:
         st.markdown(f"""
         <div class="metric-card fade-in">
-            <h3 style="color: #667eea; margin: 0;">🎯 Objectif Total</h3>
-            <h2 style="color: #2d3748; margin: 0.5rem 0;">{objectif_total:,.0f}</h2>
+            <h3 style="color: #6C63FF; margin: 0;">🎯 Objectif Total</h3>
+            <h2 style="color: #22223B; margin: 0.5rem 0;">{objectif_total:,.0f}</h2>
             <p style="color: #4a5568; margin: 0;">Objectif 2025</p>
         </div>
         """, unsafe_allow_html=True)
@@ -146,11 +153,18 @@ def afficher_projections_2025():
     with col3:
         st.markdown(f"""
         <div class="metric-card fade-in">
-            <h3 style="color: #667eea; margin: 0;">⚡ Progression</h3>
-            <h2 style="color: #2d3748; margin: 0.5rem 0;">{progression_pct:.1f}%</h2>
+            <h3 style="color: #6C63FF; margin: 0;">⚡ Progression</h3>
+            <h2 style="color: #22223B; margin: 0.5rem 0;">{progression_pct:.1f}%</h2>
             <p style="color: #4a5568; margin: 0;">De l'objectif</p>
         </div>
         """, unsafe_allow_html=True)
+
+    # Animation de progression lente avec st.progress
+    st.markdown("### ⏳ Animation de progression lente")
+    progress_bar = st.progress(0)
+    for i in range(int(progression_pct)+1):
+        progress_bar.progress(i)
+        time.sleep(0.03)  # 30 ms entre chaque incrément pour animation fluide et lente
 
     # Jauge de progression avec voiture animée
     st.markdown("### 🏎️ Course vers l'Objectif")
@@ -289,7 +303,8 @@ def afficher_projections_2025():
         paper_bgcolor="rgba(135, 206, 235, 0.1)",  # Fond bleu ciel léger
         plot_bgcolor="rgba(144, 238, 144, 0.1)",   # Fond vert prairie léger
         font=dict(family="Arial", size=12),
-        showlegend=False
+        showlegend=False,
+        transition={'duration': 1500, 'easing': 'cubic-in-out'}  # transition ralentie
     )
     
     st.plotly_chart(fig_race, use_container_width=True)
@@ -325,7 +340,8 @@ def afficher_projections_2025():
             height=300,
             font={'color': "darkblue", 'family': "Arial"},
             paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
+            plot_bgcolor="rgba(0,0,0,0)",
+            transition={'duration': 1500, 'easing': 'cubic-in-out'}
         )
         
         st.plotly_chart(fig_speedometer, use_container_width=True)
@@ -395,7 +411,8 @@ def afficher_projections_2025():
             y=1.02,
             xanchor="right",
             x=1
-        )
+        ),
+        transition={'duration': 1500, 'easing': 'cubic-in-out'}
     )
     
     fig_bar.update_traces(
@@ -441,7 +458,8 @@ def afficher_projections_2025():
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Arial", size=12),
-        showlegend=True
+        showlegend=True,
+        transition={'duration': 1500, 'easing': 'cubic-in-out'}
     )
     
     st.plotly_chart(fig_area, use_container_width=True)
@@ -473,7 +491,8 @@ def afficher_projections_2025():
         title="Performance Mensuelle (%)",
         height=500,
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)"
+        plot_bgcolor="rgba(0,0,0,0)",
+        transition={'duration': 1500, 'easing': 'cubic-in-out'}
     )
     
     st.plotly_chart(fig_radar, use_container_width=True)
@@ -551,3 +570,7 @@ def afficher_projections_2025():
         st.info("💪 Bonne progression ! Continuez sur cette lancée !")
     else:
         st.error("🚀 Il est temps d'accélérer pour atteindre l'objectif !")
+
+
+if __name__ == "__main__":
+    afficher_projections_2025()
