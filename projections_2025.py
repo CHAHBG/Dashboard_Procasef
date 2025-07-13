@@ -3,7 +3,9 @@ import pandas as pd
 import plotly.graph_objects as go
 import time
 
-# Choix du thème
+# --------- PARAMÈTRES GÉNÉRAUX ---------
+
+# Mode clair/sombre manuel (peut être automatisé avec st.theme)
 theme = st.sidebar.selectbox("Thème", ["Clair", "Sombre"])
 if theme == "Clair":
     FONT_COLOR = "#0F1B2E"
@@ -14,64 +16,120 @@ else:
     BG_COLOR = "#0F1B2E"
     ACCENT_COLOR = "#FFA500"
 
-# CSS minimaliste et adaptatif
+# --------- CSS ADAPTATIF ---------
 st.markdown(f"""
     <style>
-    .main-header {{
-        background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-        color: {FONT_COLOR};
-        padding: 2.5rem 1.5rem;
-        border-radius: 25px;
-        margin: 1rem 0 2rem 0;
-        text-align: center;
-        box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+    :root {{
+      --text-main-dark: #0F1B2E;
+      --text-main-light: #FFD700;
+      --background-dark: #0F1B2E;
+      --background-light: #FFFFFF;
     }}
-    .main-header h1, .main-header p {{
+    body, .main-header, .metric-card, .insight-card, .section-title {{
+      color: {FONT_COLOR};
+    }}
+    .main-header {{
+        background: linear-gradient(135deg, #FFD700 0%, #FFA500 25%, #FF8C00 50%, #FF6B35 75%, #E55100 100%);
         color: {FONT_COLOR};
+        padding: 3rem 2rem;
+        border-radius: 25px;
+        margin: 1rem 0 3rem 0;
+        text-align: center;
+        box-shadow: 0 15px 35px rgba(255, 215, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+    }}
+    .main-header h1 {{
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        position: relative;
+        z-index: 1;
+    }}
+    .main-header p {{
+        font-size: 1.2rem;
+        font-weight: 400;
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
     }}
     .metric-card {{
-        background: #F8F9FA;
-        padding: 2rem 1.5rem;
-        border-radius: 18px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
+        padding: 2.5rem 2rem;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(15, 27, 46, 0.1);
+        border: 2px solid transparent;
+        background-clip: padding-box;
+        margin-bottom: 2rem;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
         color: {FONT_COLOR};
     }}
-    .metric-card h2, .metric-card h3, .metric-card p {{
+    .metric-card::before {{
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #FFD700, #FFA500, #FF8C00, #FF6B35);
+        border-radius: 20px 20px 0 0;
+    }}
+    .metric-card:hover {{
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(255, 215, 0, 0.15);
+        border-color: rgba(255, 215, 0, 0.3);
+    }}
+    .metric-card h3, .metric-card h2, .metric-card p {{
         color: {FONT_COLOR};
     }}
     .section-title {{
         color: {ACCENT_COLOR};
-        font-size: 1.5rem;
+        font-size: 1.8rem;
         font-weight: 700;
-        margin: 2rem 0 1.2rem 0;
+        margin: 2rem 0 1.5rem 0;
         text-align: center;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }}
     .insight-card {{
         background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
         color: {FONT_COLOR};
-        padding: 1.2rem;
-        border-radius: 12px;
-        margin: 0.7rem 0;
-        font-weight: 600;
-        box-shadow: 0 2px 8px rgba(255, 215, 0, 0.12);
-    }}
-    .chart-container {{
-        background: #F8F9FA;
         padding: 1.5rem;
-        border-radius: 20px;
-        margin-bottom: 2rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }}
-    .progress-container {{
-        background: #f4f4f4;
-        padding: 1.2rem;
         border-radius: 15px;
-        margin: 1.5rem 0;
+        margin: 1rem 0;
+        font-weight: 600;
+        box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        transition: transform 0.3s ease;
+    }}
+    .insight-card:hover {{
+        transform: translateY(-3px);
+    }}
+    .fade-in {{
+        animation: fadeInUp 1s ease-out forwards;
+    }}
+    @keyframes fadeInUp {{
+        from {{
+            opacity: 0;
+            transform: translateY(30px);
+        }}
+        to {{
+            opacity: 1;
+            transform: translateY(0);
+        }}
+    }}
+    .stDataFrame {{
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
     }}
     </style>
 """, unsafe_allow_html=True)
 
+# --------- CHARGEMENT DES DONNÉES ---------
 @st.cache_data
 def charger_projections():
     df = pd.read_excel("projections/Projections 2025.xlsx", engine="openpyxl")
@@ -125,7 +183,7 @@ def afficher_projections_2025():
     )
 
     st.markdown(f"""
-    <div class="main-header">
+    <div class="main-header fade-in">
         <h1>📊 BET-PLUS | AUDET</h1>
         <h1>Projections des Inventaires 2025</h1>
         <p>Tableau de bord interactif pour le suivi de vos objectifs techniques</p>
@@ -133,6 +191,7 @@ def afficher_projections_2025():
     """, unsafe_allow_html=True)
 
     df = charger_projections()
+
     colonnes_cibles = {
         "mois": "mois",
         "inventaires mensuels réalisés": "realises",
@@ -149,16 +208,19 @@ def afficher_projections_2025():
                 colonnes_renommees[col] = colonnes_cibles[cle]
                 break
     df = df.rename(columns=colonnes_renommees)
+
     colonnes_obligatoires = ["mois", "realises", "objectif_mensuel", "objectif_total"]
     for col in colonnes_obligatoires:
         if col not in df.columns:
             st.error(f"❌ La colonne requise '{col}' est introuvable dans les données.")
             st.stop()
+
     df = df.dropna(subset=["mois"])
     df["realises"] = pd.to_numeric(df["realises"], errors="coerce").fillna(0)
     df["objectif_mensuel"] = pd.to_numeric(df["objectif_mensuel"], errors="coerce").fillna(0)
     df["objectif_total"] = pd.to_numeric(df["objectif_total"], errors="coerce").fillna(0)
 
+    dernier_mois = df["mois"].iloc[-1]
     objectif_total = df["objectif_total"].iloc[-1]
     realises_total = 31302
     progression_pct = (realises_total / objectif_total) * 100 if objectif_total else 0
@@ -167,7 +229,7 @@ def afficher_projections_2025():
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="metric-card fade-in">
             <h3>🎯 Levés Techniques Réalisés</h3>
             <h2>{realises_total:,}</h2>
             <p>Total des inventaires effectués</p>
@@ -175,7 +237,7 @@ def afficher_projections_2025():
         """, unsafe_allow_html=True)
     with col2:
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="metric-card fade-in">
             <h3>🏆 Objectif Technique 2025</h3>
             <h2>{objectif_total:,.0f}</h2>
             <p>Cible annuelle définie</p>
@@ -184,7 +246,7 @@ def afficher_projections_2025():
     with col3:
         couleur_prog = "#28a745" if progression_pct >= 100 else "#ffc107" if progression_pct >= 75 else "#dc3545"
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="metric-card fade-in">
             <h3>⚡ Taux de Réalisation</h3>
             <h2 style="color: {couleur_prog};">{progression_pct:.1f}%</h2>
             <p>Progression vers l'objectif</p>
@@ -233,7 +295,10 @@ def afficher_projections_2025():
                 tickfont=dict(color=ACCENT_COLOR),
                 title=dict(text="Pourcentage (%)", font=dict(color=ACCENT_COLOR))
             ),
-            yaxis=dict(showgrid=False, showticklabels=False),
+            yaxis=dict(
+                showgrid=False,
+                showticklabels=False
+            ),
             height=200,
             paper_bgcolor=BG_COLOR,
             plot_bgcolor=BG_COLOR,
@@ -260,11 +325,13 @@ def afficher_projections_2025():
     st.markdown('<h2 class="section-title">📊 Analyses Techniques Détaillées</h2>', unsafe_allow_html=True)
     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     fig_bar = go.Figure()
+    colors_realises = [ACCENT_COLOR, "#FFA500", "#FF8C00", "#FF6B35", "#E55100"]
+    colors_objectif = [FONT_COLOR, "#243B5C", "#2E4A71", "#385986", "#42689B"]
     fig_bar.add_trace(go.Bar(
         x=df["mois"],
         y=df["realises"],
         name="Inventaires Réalisés",
-        marker_color=ACCENT_COLOR,
+        marker_color=colors_realises[0],
         text=df["realises"],
         textposition='auto',
         textfont=dict(color=FONT_COLOR, size=12, family='Poppins'),
@@ -276,7 +343,7 @@ def afficher_projections_2025():
         x=df["mois"],
         y=df["objectif_mensuel"],
         name="Objectif Technique",
-        marker_color=FONT_COLOR,
+        marker_color=colors_objectif[0],
         text=df["objectif_mensuel"],
         textposition='auto',
         textfont=dict(color=FONT_COLOR, size=12, family='Poppins'),
