@@ -298,7 +298,7 @@ def afficher_projections_2025():
 
     dernier_mois = df["mois"].iloc[-1]
     objectif_total = df["objectif_total"].iloc[-1]
-    realises_total = 31302
+    realises_total = 33457
     progression_pct = (realises_total / objectif_total) * 100 if objectif_total else 0
 
     # Section métriques avec cartes modernes
